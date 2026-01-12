@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { IngestionPanel } from './components/IngestionPanel';
@@ -9,7 +9,7 @@ import { AppView, PatientData, AnalysisResult } from './types';
 import { analyzePatientData } from './services/geminiService';
 
 // Pre-populated full result for immediate review (Demo Patient)
-const DEMO_PATIENT: PatientData = {
+const DEMO_PATIENT_COMPLETE: PatientData = {
   id: 'demo-1',
   codeName: 'Cassandra Nova Vance',
   age: 38,
@@ -49,11 +49,34 @@ const DEMO_PATIENT: PatientData = {
   }
 };
 
+const DEMO_PATIENT_STAGING: PatientData = {
+  id: 'demo-2',
+  codeName: 'Marcus Aurelius Sterling',
+  age: 52,
+  gender: 'Male',
+  status: 'Staging',
+  location: { birth: 'London, UK', current: 'New York, NY' },
+  notes: 'Former athlete. Experiencing slower recovery times and high fasting glucose (105 mg/dL). Interested in longevity protocols and rapamycin synergy.',
+  files: [],
+  audioRecordings: [],
+  images: [],
+  rawMetrics: [
+    { source: 'Blood', key: 'HbA1c', value: '5.7%' },
+    { source: 'Whoop', key: 'Recovery', value: '45%' }
+  ]
+};
+
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.PATIENT_LIST);
-  const [patients, setPatients] = useState<PatientData[]>([DEMO_PATIENT]);
+  const [patients, setPatients] = useState<PatientData[]>([DEMO_PATIENT_COMPLETE, DEMO_PATIENT_STAGING]);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [apiKeyDetected, setApiKeyDetected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Check for API Key presence on load
+    setApiKeyDetected(!!process.env.API_KEY);
+  }, []);
 
   const activePatient = patients.find(p => p.id === selectedPatientId) || null;
 
@@ -70,14 +93,16 @@ const App: React.FC = () => {
   };
 
   const addNewPatient = () => {
+    const names = ["Julian Thorne", "Elena Rodriguez", "Silas Vane", "Aria Chen", "Felix Mercer"];
+    const randomName = names[Math.floor(Math.random() * names.length)];
     const newId = Math.random().toString(36).substr(2, 9);
     const newPatient: PatientData = {
       id: newId,
-      codeName: 'New Case ' + Math.floor(Math.random() * 1000).toString(),
-      age: 0,
-      gender: 'Other',
+      codeName: randomName,
+      age: Math.floor(Math.random() * 40) + 20,
+      gender: Math.random() > 0.5 ? 'Male' : 'Female',
       status: 'Staging',
-      location: { birth: '', current: '' },
+      location: { birth: 'Unknown', current: 'Remote' },
       notes: '',
       files: [],
       audioRecordings: [],
@@ -93,7 +118,7 @@ const App: React.FC = () => {
     if (!activePatient) return;
     setIsAnalyzing(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Direct integration with Gemini Service
       const result = await analyzePatientData(activePatient);
       setPatients(prev => prev.map(p => 
         p.id === selectedPatientId 
@@ -102,7 +127,8 @@ const App: React.FC = () => {
       ));
       setCurrentView(AppView.ANALYSIS);
     } catch (error) {
-      alert("Analysis engine timeout. Retrying...");
+      console.error(error);
+      alert("Analysis engine error. Check your API_KEY in Vercel settings.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -155,12 +181,26 @@ const App: React.FC = () => {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
                     <div>
-                      <h4 className="font-medium text-slate-200">Patient Data Isolation</h4>
-                      <p className="text-xs text-slate-500">Local browser storage is active</p>
+                      <h4 className="font-medium text-slate-200">Gemini API Status</h4>
+                      <p className="text-xs text-slate-500">
+                        {apiKeyDetected ? "Connected to Google GenAI Cloud" : "Missing API_KEY in environment"}
+                      </p>
                     </div>
-                    <div className="w-12 h-6 bg-emerald-600 rounded-full flex items-center px-1">
-                      <div className="w-4 h-4 bg-white rounded-full ml-auto"></div>
+                    <div className={`w-3 h-3 rounded-full ${apiKeyDetected ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'} animate-pulse`}></div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                    <div>
+                      <h4 className="font-medium text-slate-200">Deployment Environment</h4>
+                      <p className="text-xs text-slate-500">Live Vercel Production</p>
                     </div>
+                    <div className="px-2 py-1 bg-indigo-500/10 text-indigo-400 text-[10px] font-bold uppercase tracking-wider rounded border border-indigo-500/20">
+                      MVP Active
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl text-xs text-amber-200/70 leading-relaxed">
+                    <strong>Note for Live Demo:</strong> Ensure you are using the <span className="text-amber-400">gemini-3-pro-preview</span> model for best multimodal results. Your <code>API_KEY</code> must be configured in Vercel Project Settings for the <code>process.env.API_KEY</code> mapping to function.
                   </div>
                 </div>
               </div>
