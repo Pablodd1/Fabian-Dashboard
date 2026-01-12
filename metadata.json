@@ -1,0 +1,8 @@
+{
+  "name": "Bio-Integrator AI FABIAN",
+  "description": "A comprehensive functional medicine dashboard for multimodal patient data analysis, peptide recommendations, and biohacking protocols. Educational Demo Only.",
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
+}
