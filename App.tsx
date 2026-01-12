@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { IngestionPanel } from './components/IngestionPanel';
 import { AnalysisReport } from './components/AnalysisReport';
 import { PatientList } from './components/PatientList';
+import { DisclaimerModal } from './components/DisclaimerModal';
 import { AppView, PatientData, AnalysisResult } from './types';
 import { analyzePatientData } from './services/geminiService';
 
@@ -74,8 +74,8 @@ const App: React.FC = () => {
   const [apiKeyDetected, setApiKeyDetected] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Check for API Key presence on load
-    setApiKeyDetected(!!process.env.API_KEY);
+    // Safely check for API Key existence
+    setApiKeyDetected(!!(window.process?.env?.API_KEY));
   }, []);
 
   const activePatient = patients.find(p => p.id === selectedPatientId) || null;
@@ -118,7 +118,6 @@ const App: React.FC = () => {
     if (!activePatient) return;
     setIsAnalyzing(true);
     try {
-      // Direct integration with Gemini Service
       const result = await analyzePatientData(activePatient);
       setPatients(prev => prev.map(p => 
         p.id === selectedPatientId 
@@ -128,7 +127,7 @@ const App: React.FC = () => {
       setCurrentView(AppView.ANALYSIS);
     } catch (error) {
       console.error(error);
-      alert("Analysis engine error. Check your API_KEY in Vercel settings.");
+      alert("Analysis engine error. Check your API_KEY configuration.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -136,6 +135,8 @@ const App: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-200">
+      <DisclaimerModal />
+      
       <Sidebar 
         currentView={currentView} 
         onChangeView={(view) => {
@@ -191,8 +192,8 @@ const App: React.FC = () => {
 
                   <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
                     <div>
-                      <h4 className="font-medium text-slate-200">Deployment Environment</h4>
-                      <p className="text-xs text-slate-500">Live Vercel Production</p>
+                      <h4 className="font-medium text-slate-200">Deployment Status</h4>
+                      <p className="text-xs text-slate-500">Bio-Integrator V1.0 - Production Ready</p>
                     </div>
                     <div className="px-2 py-1 bg-indigo-500/10 text-indigo-400 text-[10px] font-bold uppercase tracking-wider rounded border border-indigo-500/20">
                       MVP Active
@@ -200,7 +201,7 @@ const App: React.FC = () => {
                   </div>
 
                   <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl text-xs text-amber-200/70 leading-relaxed">
-                    <strong>Note for Live Demo:</strong> Ensure you are using the <span className="text-amber-400">gemini-3-pro-preview</span> model for best multimodal results. Your <code>API_KEY</code> must be configured in Vercel Project Settings for the <code>process.env.API_KEY</code> mapping to function.
+                    <strong>Note:</strong> The analysis engine utilizes <span className="text-amber-400">gemini-3-pro-preview</span> for complex multimodal reasoning. Ensure your API_KEY is correctly set in your hosting provider's environment variables.
                   </div>
                 </div>
               </div>

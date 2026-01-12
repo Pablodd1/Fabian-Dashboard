@@ -1,11 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PatientData, AnalysisResult } from "../types";
 
-// Using the latest Pro model for complex reasoning and high-fidelity vision tasks
+// Using the recommended models
 const ANALYSIS_MODEL = "gemini-3-pro-preview";
 const TRANSCRIPTION_MODEL = "gemini-3-flash-preview"; 
-
-const genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // Helper to convert Blob to base64 for the API
 const blobToBase64 = (blob: Blob): Promise<string> => {
@@ -22,9 +20,10 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
 
 export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const base64Data = await blobToBase64(audioBlob);
     
-    const response = await genAI.models.generateContent({
+    const response = await ai.models.generateContent({
       model: TRANSCRIPTION_MODEL,
       contents: {
         parts: [
@@ -48,13 +47,11 @@ export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
 
 export const analyzePatientData = async (patient: PatientData): Promise<AnalysisResult> => {
   try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const parts: any[] = [];
 
-    // 1. Construct the System/Context Prompt with Elite Clinical Radiologist & Functional MD Persona
     let promptText = `
       ROLE: You are an Elite Functional Medicine Physician, Clinical Radiologist, and Pharmacologist.
-      Your analytical capabilities match the top 0.1% of clinicians globally, specializing in pattern recognition across disparate data types.
-
       TASK: Perform a "Multimodal Correlative Root Cause Analysis".
       
       PATIENT CONTEXT:
@@ -62,60 +59,32 @@ export const analyzePatientData = async (patient: PatientData): Promise<Analysis
       Environmental Context: Birth in ${patient.location.birth}, currently residing in ${patient.location.current}.
 
       CRITICAL ANALYSIS GUIDELINES:
-      
-      1. **Inter-modal Correlation (Connect the Dots)**: 
-         - DO NOT analyze data in silos. 
-         - If an image shows inflammation, look for mentions of pain in the audio transcripts.
-         - If a metric (e.g., HRV) is low, look for physiological stressors in the imaging or clinical notes.
-         - Explicitly state the evidence-based link between modality A (Imaging) and modality B (Symptoms/Metrics).
-      
-      2. **Advanced Radiological Deduction**: 
-         - Analyze any attached images with forensic precision.
-         - Describe findings using formal medical nomenclature (e.g., "hyperechoic foci," "cortical thinning," "T2 hyperintensity").
-         - Correlate these specific visual findings with the patient's reported clinical presentation.
-      
-      3. **Mechanistic Root Cause Analysis**: 
-         - Go beyond symptoms. Identify the cellular or metabolic failure (e.g., mitochondrial dysfunction, HPA-axis dysregulation, oxidative stress).
-         - Reference specific biomarkers from the provided metrics to support your theory.
-      
-      4. **Evidence-Based Protocols**:
-         - Suggest interventions (Peptides, Nootropics, Lifestyle) that specifically address the identified mechanistic failures.
-         - Use precise dosages and explain the biochemical mechanism of action (MOA).
+      1. Inter-modal Correlation: Connect imaging findings with reported symptoms and biometric metrics.
+      2. Mechanistic Analysis: Identify cellular pathways (e.g. HPA-axis, mitochondrial) causing the issues.
+      3. Precise Interventions: Suggest specific peptides, nutrients, and protocols.
 
       OUTPUT FORMAT (Strict JSON):
       {
-        "rootCause": ["Evidence-linked primary drivers"],
-        "brainPowerScore": number (0-100),
-        "longevityScore": number (0-100),
-        "imagingFindings": ["Findings mapped to clinical context: 'Finding X suggests Y in context of symptom Z'"],
-        "missingLabs": ["Specific tests to confirm cross-modal hypotheses"],
-        "discoveryQuestions": ["Targeted questions to resolve data conflicts between modalities"],
-        "nutrientDepletions": ["Specific deficiencies supported by the clinical profile"],
-        "therapeuticSynergies": ["Positive physiological interactions observed"],
-        "lifestyleRecommendations": ["Bio-individual interventions"],
-        "peptideProtocol": [
-           {
-             "name": "Compound", 
-             "dosage": "Precise dosage", 
-             "mechanism": "Link back to identified root cause",
-             "expectedOutcome": "Clinical delta"
-           }
-        ],
-        "labOrders": [
-           {"testName": "Panel", "cptCode": "CPT", "reason": "Specific rationale linked to current data gaps"}
-        ],
-        "summary": "Unified Clinical Narrative: An integrated explanation of how the visual evidence, quantitative metrics, and verbal reports combine into a single physiological state.",
-        "disclaimer": "Standard Medical Disclaimer."
+        "rootCause": ["primary drivers"],
+        "brainPowerScore": number,
+        "longevityScore": number,
+        "imagingFindings": ["clinical findings"],
+        "missingLabs": ["recommended tests"],
+        "discoveryQuestions": ["follow up questions"],
+        "nutrientDepletions": ["deficiencies"],
+        "therapeuticSynergies": ["synergistic effects"],
+        "lifestyleRecommendations": ["hacks"],
+        "peptideProtocol": [{"name": "", "dosage": "", "mechanism": "", "expectedOutcome": ""}],
+        "labOrders": [{"testName": "", "cptCode": "", "reason": ""}],
+        "summary": "Unified narrative",
+        "disclaimer": "Standard disclaimer"
       }
       
       RAW DATA:
       ${patient.rawMetrics.map(m => `${m.source}: ${m.key} = ${m.value}`).join('\n')}
-
-      NOTES:
-      ${patient.notes}
+      NOTES: ${patient.notes}
     `;
 
-    // 2. Add Audio Transcriptions
     if (patient.audioRecordings.length > 0) {
       promptText += "\n\nAUDIO CONSULTATION EVIDENCE:\n";
       for (const audio of patient.audioRecordings) {
@@ -127,7 +96,6 @@ export const analyzePatientData = async (patient: PatientData): Promise<Analysis
 
     parts.push({ text: promptText });
 
-    // 3. Add Imaging Data (Multimodal)
     for (const img of patient.images) {
       const base64Data = img.base64.split(',')[1]; 
       parts.push({
@@ -136,19 +104,16 @@ export const analyzePatientData = async (patient: PatientData): Promise<Analysis
           data: base64Data
         }
       });
-      parts.push({ text: `Analyze the image named "${img.name}" as a clinical diagnostic asset. Look for specific visual markers that explain the patient's metrics or symptoms.` });
+      parts.push({ text: `Analyze image "${img.name}" as a clinical diagnostic asset.` });
     }
 
-    // 4. Add Files
     for (const file of patient.files) {
       parts.push({ text: `\nSUPPLEMENTAL DOCUMENT: ${file.name}\n${file.content}\n` });
     }
 
-    const response = await genAI.models.generateContent({
+    const response = await ai.models.generateContent({
       model: ANALYSIS_MODEL,
-      contents: {
-        parts: parts
-      },
+      contents: { parts: parts },
       config: {
         responseMimeType: "application/json",
         thinkingConfig: { thinkingBudget: 32768 },
@@ -199,7 +164,6 @@ export const analyzePatientData = async (patient: PatientData): Promise<Analysis
     } else {
       throw new Error("No response from AI");
     }
-
   } catch (error) {
     console.error("Deep Analysis Error:", error);
     return {

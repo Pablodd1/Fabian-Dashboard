@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Mic, File as FileIcon, X, Plus, Image as ImageIcon, MapPin, Loader2, FileAudio, Edit2, Check, AlertCircle, RefreshCw, FileText, ScanEye } from 'lucide-react';
+import { Upload, Mic, File as FileIcon, X, Plus, Image as ImageIcon, MapPin, Loader2, FileAudio, Edit2, Check, AlertCircle, RefreshCw, FileText, ScanEye, Maximize2 } from 'lucide-react';
 import { PatientData, FileRecord, ImageRecord, AudioRecord, MetricRecord } from '../types';
 import { transcribeAudio } from '../services/geminiService';
 import { DicomViewer } from './DicomViewer';
@@ -19,6 +19,7 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
   const [transcriptionStatuses, setTranscriptionStatuses] = useState<Record<string, TranscriptionStatus>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [activeDicom, setActiveDicom] = useState<{ name: string; url: string; content?: string } | null>(null);
+  const [selectedImage, setSelectedImage] = useState<ImageRecord | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   
   const setStatus = (id: string, status: TranscriptionStatus) => {
@@ -141,6 +142,28 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
       
       {activeDicom && <DicomViewer file={activeDicom} onClose={() => setActiveDicom(null)} />}
 
+      {/* Image Preview Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
+          <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center gap-4" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-12 right-0 p-2 text-white hover:text-slate-300 transition-colors"
+            >
+              <X className="w-8 h-8" />
+            </button>
+            <img 
+              src={selectedImage.url} 
+              className="max-w-full max-h-full object-contain rounded-lg border border-slate-700 shadow-2xl" 
+              alt={selectedImage.name} 
+            />
+            <div className="bg-slate-900 px-6 py-3 rounded-full border border-slate-800 text-slate-300 text-sm font-medium">
+              {selectedImage.name} • {selectedImage.mimeType}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -240,176 +263,145 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
               {isRecording ? "Stop Capture" : "Start Live Consultation Audio"}
             </button>
           </div>
-
-          <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-sm">
-            <h3 className="font-semibold text-white flex items-center gap-2 mb-4">
-              <MapPin className="w-5 h-5 text-emerald-400" />
-              Patient Geography
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] text-slate-500 block mb-1 uppercase tracking-widest font-bold">Birth Location</label>
-                <input 
-                  type="text" 
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
-                  value={patient.location.birth}
-                  onChange={(e) => onUpdatePatient({ location: { ...patient.location, birth: e.target.value } })}
-                  placeholder="City, Country"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] text-slate-500 block mb-1 uppercase tracking-widest font-bold">Current Residence</label>
-                <input 
-                  type="text" 
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500 transition-colors"
-                  value={patient.location.current}
-                  onChange={(e) => onUpdatePatient({ location: { ...patient.location, current: e.target.value } })}
-                  placeholder="City, Country"
-                />
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Uploaded Items List */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
-        <div className="p-4 bg-slate-800/50 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-slate-300">Staged Clinical Evidence</h3>
-            <span className="text-[10px] bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded text-indigo-400 font-mono">
-              {patient.files.length + patient.images.length + patient.audioRecordings.length} ASSETS
-            </span>
-          </div>
-          <button onClick={addMetric} className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded text-emerald-400 flex items-center gap-1 border border-slate-700 transition-colors font-semibold">
-            <Plus className="w-3 h-3" /> Add Marker
-          </button>
-        </div>
-        
-        <div className="p-4 space-y-3">
-          {patient.files.length === 0 && patient.audioRecordings.length === 0 && patient.images.length === 0 && (
-             <div className="text-center py-12 text-slate-600 italic flex flex-col items-center gap-3">
-               <div className="w-12 h-12 rounded-full border-2 border-slate-800 flex items-center justify-center opacity-40">
-                 <FileIcon className="w-6 h-6" />
-               </div>
-               No clinical assets staged.
-             </div>
-          )}
-
-          {patient.files.map(f => (
-            <div key={f.id} className="flex items-center gap-3 p-3 bg-slate-800/20 rounded-xl hover:bg-slate-800/40 transition-colors border border-slate-800/50">
-              <div className="p-2 bg-blue-500/10 rounded-lg"><FileIcon className="w-5 h-5 text-blue-400" /></div>
-              <div className="flex-1">
-                <div className="text-sm font-medium text-slate-200">{f.name}</div>
-                <div className="text-[10px] text-slate-500 uppercase font-mono tracking-tighter">{f.type || 'Clinical Document'}</div>
-              </div>
-              <button onClick={() => onUpdatePatient({files: patient.files.filter(x => x.id !== f.id)})} className="p-2 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-
-          {patient.images.map(img => (
-            <div key={img.id} className="flex items-center gap-3 p-3 bg-slate-800/20 rounded-xl hover:bg-slate-800/40 transition-colors border border-slate-800/50">
-              <div className="p-2 bg-purple-500/10 rounded-lg"><ImageIcon className="w-5 h-5 text-purple-400" /></div>
-              <div className="flex-1 flex items-center gap-3">
-                <img src={img.url} className="w-10 h-10 rounded-lg object-cover border border-slate-700" alt="thumbnail" />
-                <div>
-                  <div className="text-sm font-medium text-slate-200">{img.name}</div>
-                  <div className="text-[10px] text-slate-500 uppercase font-mono tracking-tighter">
-                    {img.name.toLowerCase().endsWith('.dcm') ? 'DICOM Imaging' : 'Diagnostic Photo'}
+      {/* Asset Library Grid */}
+      <div className="space-y-6">
+        {patient.images.length > 0 && (
+          <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6">
+            <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-purple-400" />
+              Imaging Assets
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {patient.images.map(img => (
+                <div key={img.id} className="relative group aspect-square rounded-xl overflow-hidden border border-slate-800 hover:border-indigo-500/50 transition-all bg-slate-950">
+                  <img 
+                    src={img.url} 
+                    className="w-full h-full object-cover transition-transform group-hover:scale-110" 
+                    alt={img.name} 
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-4 text-center">
+                    <p className="text-[10px] text-white font-medium truncate w-full mb-2">{img.name}</p>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => setSelectedImage(img)}
+                        className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white"
+                        title="Preview"
+                      >
+                        <Maximize2 className="w-4 h-4" />
+                      </button>
+                      {img.name.toLowerCase().endsWith('.dcm') && (
+                        <button 
+                          onClick={() => setActiveDicom({ name: img.name, url: img.url })}
+                          className="p-2 bg-indigo-500/20 hover:bg-indigo-500/40 rounded-lg text-indigo-400"
+                          title="Open DICOM Console"
+                        >
+                          <ScanEye className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => onUpdatePatient({images: patient.images.filter(x => x.id !== img.id)})}
+                        className="p-2 bg-red-500/20 hover:bg-red-500/40 rounded-lg text-red-400"
+                        title="Remove"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setActiveDicom({ name: img.name, url: img.url })}
-                  className="px-3 py-1.5 text-xs font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/20 transition-all flex items-center gap-1.5"
-                >
-                  <ScanEye className="w-3 h-3" />
-                  View Imaging
-                </button>
-                <button onClick={() => onUpdatePatient({images: patient.images.filter(x => x.id !== img.id)})} className="p-2 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Other Assets (Files & Audio) */}
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+          <div className="p-4 bg-slate-800/50 border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-slate-300">Staged Clinical Documents & Audio</h3>
+              <span className="text-[10px] bg-indigo-500/10 border border-indigo-500/20 px-1.5 py-0.5 rounded text-indigo-400 font-mono">
+                {patient.files.length + patient.audioRecordings.length} ASSETS
+              </span>
+            </div>
+            <button onClick={addMetric} className="text-xs bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded text-emerald-400 flex items-center gap-1 border border-slate-700 transition-colors font-semibold">
+              <Plus className="w-3 h-3" /> Add Marker
+            </button>
+          </div>
+          
+          <div className="p-4 space-y-3">
+            {patient.files.length === 0 && patient.audioRecordings.length === 0 && (
+               <div className="text-center py-8 text-slate-600 italic">
+                 No documents or recordings staged.
+               </div>
+            )}
+
+            {patient.files.map(f => (
+              <div key={f.id} className="flex items-center gap-3 p-3 bg-slate-800/20 rounded-xl hover:bg-slate-800/40 transition-colors border border-slate-800/50">
+                <div className="p-2 bg-blue-500/10 rounded-lg"><FileIcon className="w-5 h-5 text-blue-400" /></div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-slate-200">{f.name}</div>
+                  <div className="text-[10px] text-slate-500 uppercase font-mono tracking-tighter">{f.type || 'Clinical Document'}</div>
+                </div>
+                <button onClick={() => onUpdatePatient({files: patient.files.filter(x => x.id !== f.id)})} className="p-2 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
                   <X className="w-4 h-4" />
                 </button>
               </div>
-            </div>
-          ))}
+            ))}
 
-          {patient.audioRecordings.map(a => {
-            const status = transcriptionStatuses[a.id] || 'idle';
-            return (
-              <div key={a.id} className="flex flex-col gap-3 p-4 bg-slate-800/20 rounded-xl transition-all border border-slate-800/50 hover:border-slate-700">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-pink-500/10 rounded-lg"><Mic className="w-5 h-5 text-pink-400" /></div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-slate-200">Consultation Recording</div>
-                    <audio src={a.url} controls className="h-8 mt-1.5 w-full max-w-sm opacity-90" />
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    {status === 'loading' && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold animate-pulse">
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                        Processing...
-                      </div>
-                    )}
-
-                    {!a.transcription && status === 'idle' && (
-                      <button 
-                        onClick={() => handleTranscribe(a.id, a.blob)}
-                        className="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/30 transition-all flex items-center gap-2"
-                      >
-                        <FileAudio className="w-3 h-3" />
-                        Transcribe
+            {patient.audioRecordings.map(a => {
+              const status = transcriptionStatuses[a.id] || 'idle';
+              return (
+                <div key={a.id} className="flex flex-col gap-3 p-4 bg-slate-800/20 rounded-xl transition-all border border-slate-800/50 hover:border-slate-700">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-pink-500/10 rounded-lg"><Mic className="w-5 h-5 text-pink-400" /></div>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-slate-200">Consultation Recording</div>
+                      <audio src={a.url} controls className="h-8 mt-1.5 w-full max-w-sm opacity-90" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {status === 'loading' && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold animate-pulse">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        </div>
+                      )}
+                      {!a.transcription && status === 'idle' && (
+                        <button onClick={() => handleTranscribe(a.id, a.blob)} className="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/30 transition-all flex items-center gap-2">
+                          <FileAudio className="w-3 h-3" /> Transcribe
+                        </button>
+                      )}
+                      {a.transcription && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
+                          <Check className="w-3 h-3" />
+                        </div>
+                      )}
+                      <button onClick={() => onUpdatePatient({audioRecordings: patient.audioRecordings.filter(x => x.id !== a.id)})} className="p-2 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
+                        <X className="w-4 h-4" />
                       </button>
-                    )}
-
-                    {a.transcription && (
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-                        <Check className="w-3 h-3" />
-                        Transcribed
-                      </div>
-                    )}
-
-                    <button onClick={() => onUpdatePatient({audioRecordings: patient.audioRecordings.filter(x => x.id !== a.id)})} className="p-2 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
-                      <X className="w-4 h-4" />
-                    </button>
+                    </div>
                   </div>
-                </div>
-
-                {a.transcription && (
-                  <div className="mt-1 ml-11 relative group">
-                    {editingId === a.id ? (
-                      <div className="space-y-2">
-                         <textarea 
-                            value={a.transcription}
-                            onChange={(e) => handleUpdateTranscription(a.id, e.target.value)}
-                            className="w-full bg-slate-950 p-4 rounded-xl border border-indigo-500/50 text-xs font-mono text-slate-300 focus:outline-none min-h-[120px]"
-                         />
-                         <button onClick={() => setEditingId(null)} className="px-3 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">COMMIT</button>
-                      </div>
-                    ) : (
+                  {a.transcription && (
+                    <div className="mt-1 ml-11 relative group">
                       <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 relative">
-                        <p className="text-xs text-slate-400 font-mono leading-relaxed pr-8">{a.transcription}</p>
-                        <button onClick={() => setEditingId(a.id)} className="absolute top-4 right-4 text-slate-600 hover:text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity"><Edit2 className="w-3 h-3"/></button>
+                        <p className="text-xs text-slate-400 font-mono leading-relaxed">{a.transcription}</p>
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
-           {patient.rawMetrics.map((m, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 bg-slate-800/20 rounded-xl border-l-4 border-emerald-500 hover:bg-slate-800/40 transition-colors">
-              <div className="p-2 bg-emerald-500/10 rounded-lg"><ActivityIcon className="w-4 h-4 text-emerald-400" /></div>
-              <div className="flex-1 flex gap-4 items-center">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{m.source}</span>
-                <span className="text-sm text-slate-300">{m.key}: <span className="text-white font-mono font-bold">{m.value}</span></span>
+             {patient.rawMetrics.map((m, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 bg-slate-800/20 rounded-xl border-l-4 border-emerald-500 hover:bg-slate-800/40 transition-colors">
+                <div className="p-2 bg-emerald-500/10 rounded-lg"><ActivityIcon className="w-4 h-4 text-emerald-400" /></div>
+                <div className="flex-1 flex gap-4 items-center">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{m.source}</span>
+                  <span className="text-sm text-slate-300">{m.key}: <span className="text-white font-mono font-bold">{m.value}</span></span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>
