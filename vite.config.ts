@@ -18,6 +18,15 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks: {
+              vendor: ['react', 'react-dom', 'lucide-react', 'recharts', 'dicom-parser', '@google/genai'],
+            },
+          },
+        },
       }
     };
 });
