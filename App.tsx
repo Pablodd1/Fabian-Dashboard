@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Sidebar } from './components/Sidebar.tsx';
 import { Header } from './components/Header.tsx';
 import { IngestionPanel } from './components/IngestionPanel.tsx';
-import { AnalysisReport } from './components/AnalysisReport.tsx';
 import { PatientList } from './components/PatientList.tsx';
 import { DisclaimerModal } from './components/DisclaimerModal.tsx';
 import { RegistrationModal } from './components/RegistrationModal.tsx';
+
+// Lazy load AnalysisReport as it contains heavy visualization libraries (recharts)
+const AnalysisReport = React.lazy(() => import('./components/AnalysisReport.tsx').then(module => ({ default: module.AnalysisReport })));
 import { AppView, PatientData } from './types.ts';
 import { analyzePatientData } from './services/geminiService.ts';
 
@@ -148,11 +150,13 @@ const App: React.FC = () => {
           )}
 
           {currentView === AppView.ANALYSIS && activePatient && (
-            <AnalysisReport 
-              data={activePatient.analysisResult || null} 
-              onRetry={runAnalysis}
-              isAnalyzing={isAnalyzing}
-            />
+            <React.Suspense fallback={<div className="flex items-center justify-center h-full text-slate-400">Loading Report...</div>}>
+              <AnalysisReport
+                data={activePatient.analysisResult || null}
+                onRetry={runAnalysis}
+                isAnalyzing={isAnalyzing}
+              />
+            </React.Suspense>
           )}
 
           {currentView === AppView.SETTINGS && (
