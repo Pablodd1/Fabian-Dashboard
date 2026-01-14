@@ -75,14 +75,23 @@ export const analyzePatientData = async (patient: PatientData): Promise<Analysis
 
     // Include multimodal imagery
     for (const img of patient.images) {
-      const base64Data = img.base64.split(',')[1] || img.base64; 
-      parts.push({ 
-        inlineData: { 
-          mimeType: img.mimeType || 'image/jpeg', 
-          data: base64Data 
-        } 
-      });
-      parts.push({ text: `Analyze patient imaging asset: ${img.name}` });
+      let base64Data: string = "";
+
+      if (img.originalFile) {
+        base64Data = await blobToBase64(img.originalFile);
+      } else if (img.base64) {
+        base64Data = img.base64.split(',')[1] || img.base64;
+      }
+
+      if (base64Data) {
+        parts.push({
+          inlineData: {
+            mimeType: img.mimeType || 'image/jpeg',
+            data: base64Data
+          }
+        });
+        parts.push({ text: `Analyze patient imaging asset: ${img.name}` });
+      }
     }
 
     const response = await ai.models.generateContent({
