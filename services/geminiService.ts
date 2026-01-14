@@ -73,9 +73,17 @@ export const analyzePatientData = async (patient: PatientData): Promise<Analysis
 
     parts.push({ text: promptText });
 
+    const getBase64Data = (base64: string): Promise<string> => {
+      return new Promise(resolve => {
+        setTimeout(() => {
+          resolve(base64.split(',')[1] || base64);
+        }, 0);
+      });
+    };
+
     // Include multimodal imagery
     for (const img of patient.images) {
-      const base64Data = img.base64.split(',')[1] || img.base64; 
+      const base64Data = await getBase64Data(img.base64);
       parts.push({ 
         inlineData: { 
           mimeType: img.mimeType || 'image/jpeg', 
