@@ -1,5 +1,5 @@
 import React from 'react';
-import { AnalysisResult } from '../types';
+import { AnalysisResult } from '../types.ts';
 import { ResponsiveContainer, RadialBarChart, RadialBar, Legend, Tooltip } from 'recharts';
 import { Beaker, Brain, Heart, ClipboardList, AlertCircle, Play, ScanEye, AlertTriangle, Pill, FileQuestion, TestTube, RefreshCw, Loader2 } from 'lucide-react';
 

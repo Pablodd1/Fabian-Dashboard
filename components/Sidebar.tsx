@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { AppView } from '../types';
+import { AppView } from '../types.ts';
 import { FileText, Settings, Activity, Dna, Database } from 'lucide-react';
 
 interface SidebarProps {
