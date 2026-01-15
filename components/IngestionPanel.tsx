@@ -36,22 +36,13 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
         const isDicom = file.name.toLowerCase().endsWith('.dcm');
         
         if (file.type.startsWith('image/') || isDicom) {
-           const reader = new FileReader();
-           const promise = new Promise<void>((resolve) => {
-             reader.onload = (ev) => {
-               const base64 = ev.target?.result as string;
-               newImages.push({
-                 id: Math.random().toString(36).substr(2, 9),
-                 name: file.name,
-                 url: URL.createObjectURL(file),
-                 base64,
-                 mimeType: isDicom ? 'application/dicom' : file.type
-               });
-               resolve();
-             };
-             reader.readAsDataURL(file);
-           });
-           await promise;
+          newImages.push({
+            id: Math.random().toString(36).substr(2, 9),
+            name: file.name,
+            url: URL.createObjectURL(file),
+            originalFile: file,
+            mimeType: isDicom ? 'application/dicom' : file.type
+          });
         } else {
           const text = await file.text().catch(() => "Binary content placeholder");
           newFiles.push({
