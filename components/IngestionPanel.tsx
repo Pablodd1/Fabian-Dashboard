@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 /* Added Database icon to the import list to fix the compilation error on line 191 */
 import { Upload, Mic, File as FileIcon, X, Plus, Image as ImageIcon, Loader2, FileAudio, Edit2, Check, Maximize2, Activity as ActivityIcon, ScanEye, Trash2, Play, Info, Database } from 'lucide-react';
 import { PatientData, FileRecord, ImageRecord, AudioRecord } from '../types.ts';
-import { transcribeAudio } from '../services/geminiService.ts';
+import { transcribeAudio } from '../services/openaiService.ts';
 import { DicomViewer } from './DicomViewer.tsx';
 
 interface IngestionPanelProps {
