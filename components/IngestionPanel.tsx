@@ -31,8 +31,7 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
       const newFiles: FileRecord[] = [];
       const newImages: ImageRecord[] = [];
       
-      for (let i = 0; i < e.target.files.length; i++) {
-        const file = e.target.files[i];
+      const promises = Array.from(e.target.files).map(async (file) => {
         const isDicom = file.name.toLowerCase().endsWith('.dcm');
         
         if (file.type.startsWith('image/') || isDicom) {
@@ -52,7 +51,9 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
             content: text
           });
         }
-      }
+      });
+
+      await Promise.all(promises);
       onUpdatePatient({ 
         files: [...patient.files, ...newFiles],
         images: [...patient.images, ...newImages]
