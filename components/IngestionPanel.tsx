@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 /* Added Database icon to the import list to fix the compilation error on line 191 */
 import { Upload, Mic, File as FileIcon, X, Plus, Image as ImageIcon, Loader2, FileAudio, Edit2, Check, Maximize2, Activity as ActivityIcon, ScanEye, Trash2, Play, Info, Database } from 'lucide-react';
 import { PatientData, FileRecord, ImageRecord, AudioRecord } from '../types.ts';
-import { transcribeAudio } from '../services/geminiService.ts';
+import { transcribeAudio } from '../services/openaiService.ts';
 import { DicomViewer } from './DicomViewer.tsx';
 
 interface IngestionPanelProps {
@@ -31,27 +31,17 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
       const newFiles: FileRecord[] = [];
       const newImages: ImageRecord[] = [];
       
-      for (let i = 0; i < e.target.files.length; i++) {
-        const file = e.target.files[i];
+      const promises = Array.from(e.target.files).map(async (file) => {
         const isDicom = file.name.toLowerCase().endsWith('.dcm');
         
         if (file.type.startsWith('image/') || isDicom) {
-           const reader = new FileReader();
-           const promise = new Promise<void>((resolve) => {
-             reader.onload = (ev) => {
-               const base64 = ev.target?.result as string;
-               newImages.push({
-                 id: Math.random().toString(36).substr(2, 9),
-                 name: file.name,
-                 url: URL.createObjectURL(file),
-                 base64,
-                 mimeType: isDicom ? 'application/dicom' : file.type
-               });
-               resolve();
-             };
-             reader.readAsDataURL(file);
-           });
-           await promise;
+          newImages.push({
+            id: Math.random().toString(36).substr(2, 9),
+            name: file.name,
+            url: URL.createObjectURL(file),
+            originalFile: file,
+            mimeType: isDicom ? 'application/dicom' : file.type
+          });
         } else {
           const text = await file.text().catch(() => "Binary content placeholder");
           newFiles.push({
@@ -61,7 +51,9 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
             content: text
           });
         }
-      }
+      });
+
+      await Promise.all(promises);
       onUpdatePatient({ 
         files: [...patient.files, ...newFiles],
         images: [...patient.images, ...newImages]

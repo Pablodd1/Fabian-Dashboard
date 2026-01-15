@@ -42,7 +42,8 @@ export interface ImageRecord {
   id: string;
   name: string;
   url: string;
-  base64: string;
+  base64?: string;
+  originalFile?: File;
   mimeType: string;
 }
 

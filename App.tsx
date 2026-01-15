@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Sidebar } from './components/Sidebar.tsx';
 import { Header } from './components/Header.tsx';
 import { IngestionPanel } from './components/IngestionPanel.tsx';
-import { AnalysisReport } from './components/AnalysisReport.tsx';
 import { PatientList } from './components/PatientList.tsx';
 import { DisclaimerModal } from './components/DisclaimerModal.tsx';
 import { RegistrationModal } from './components/RegistrationModal.tsx';
 import { AppView, PatientData } from './types.ts';
-import { analyzePatientData } from './services/geminiService.ts';
+import { analyzePatientData } from './services/openaiService.ts';
+
+const AnalysisReport = lazy(() => import('./components/AnalysisReport.tsx').then(module => ({ default: module.AnalysisReport })));
 
 const DEMO_PATIENT_COMPLETE: PatientData = {
   id: 'demo-1',
@@ -52,7 +53,7 @@ const App: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   
-  const apiKeyDetected = !!process.env.API_KEY;
+  const apiKeyDetected = !!process.env.OPENAI_API_KEY;
 
   const activePatient = patients.find(p => p.id === selectedPatientId) || null;
 
@@ -148,11 +149,13 @@ const App: React.FC = () => {
           )}
 
           {currentView === AppView.ANALYSIS && activePatient && (
-            <AnalysisReport 
-              data={activePatient.analysisResult || null} 
-              onRetry={runAnalysis}
-              isAnalyzing={isAnalyzing}
-            />
+            <Suspense fallback={<div className="flex items-center justify-center h-full text-slate-500">Loading analysis module...</div>}>
+              <AnalysisReport
+                data={activePatient.analysisResult || null}
+                onRetry={runAnalysis}
+                isAnalyzing={isAnalyzing}
+              />
+            </Suspense>
           )}
 
           {currentView === AppView.SETTINGS && (
@@ -162,9 +165,9 @@ const App: React.FC = () => {
                 <div className="space-y-6">
                   <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700">
                     <div>
-                      <h4 className="font-medium text-slate-200">Gemini AI Status</h4>
+                      <h4 className="font-medium text-slate-200">OpenAI Status</h4>
                       <p className="text-xs text-slate-500">
-                        {apiKeyDetected ? "Connected to Google GenAI Cloud" : "Missing API_KEY in environment"}
+                        {apiKeyDetected ? "Connected to OpenAI Cloud" : "Missing OPENAI_API_KEY in environment"}
                       </p>
                     </div>
                     <div className={`w-3 h-3 rounded-full ${apiKeyDetected ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'} animate-pulse`}></div>
