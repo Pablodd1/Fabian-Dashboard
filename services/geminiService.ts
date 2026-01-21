@@ -5,12 +5,18 @@ import { PatientData, AnalysisResult } from "../types.ts";
 const ANALYSIS_MODEL = "gemini-3-pro-preview";
 const TRANSCRIPTION_MODEL = "gemini-3-flash-preview"; 
 
+let aiClientInstance: GoogleGenAI | null = null;
+
 const getAIClient = () => {
+  if (aiClientInstance) {
+    return aiClientInstance;
+  }
   const apiKey = process.env.API_KEY;
   if (!apiKey) {
     throw new Error("API_KEY environment variable is not configured.");
   }
-  return new GoogleGenAI({ apiKey });
+  aiClientInstance = new GoogleGenAI({ apiKey });
+  return aiClientInstance;
 };
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
