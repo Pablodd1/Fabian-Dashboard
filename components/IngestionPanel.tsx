@@ -28,40 +28,51 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const newFiles: FileRecord[] = [];
-      const newImages: ImageRecord[] = [];
+      const files = Array.from(e.target.files);
       
-      for (let i = 0; i < e.target.files.length; i++) {
-        const file = e.target.files[i];
+      const processResults = await Promise.all(files.map(async (file: File) => {
         const isDicom = file.name.toLowerCase().endsWith('.dcm');
         
         if (file.type.startsWith('image/') || isDicom) {
-           const reader = new FileReader();
-           const promise = new Promise<void>((resolve) => {
+           return new Promise<{ type: 'image', data: ImageRecord }>((resolve) => {
+             const reader = new FileReader();
              reader.onload = (ev) => {
                const base64 = ev.target?.result as string;
-               newImages.push({
-                 id: Math.random().toString(36).substr(2, 9),
-                 name: file.name,
-                 url: URL.createObjectURL(file),
-                 base64,
-                 mimeType: isDicom ? 'application/dicom' : file.type
+               resolve({
+                 type: 'image',
+                 data: {
+                   id: Math.random().toString(36).substr(2, 9),
+                   name: file.name,
+                   url: URL.createObjectURL(file),
+                   base64,
+                   mimeType: isDicom ? 'application/dicom' : file.type
+                 }
                });
-               resolve();
              };
              reader.readAsDataURL(file);
            });
-           await promise;
         } else {
           const text = await file.text().catch(() => "Binary content placeholder");
-          newFiles.push({
-            id: Math.random().toString(36).substr(2, 9),
-            name: file.name,
-            type: file.type,
-            content: text
-          });
+          return {
+            type: 'file',
+            data: {
+              id: Math.random().toString(36).substr(2, 9),
+              name: file.name,
+              type: file.type,
+              content: text
+            } as FileRecord
+          };
         }
-      }
+      }));
+
+      const newImages = processResults
+        .filter((r): r is { type: 'image', data: ImageRecord } => r.type === 'image')
+        .map(r => r.data);
+
+      const newFiles = processResults
+        .filter((r): r is { type: 'file', data: FileRecord } => r.type === 'file')
+        .map(r => r.data);
+
       onUpdatePatient({ 
         files: [...patient.files, ...newFiles],
         images: [...patient.images, ...newImages]
