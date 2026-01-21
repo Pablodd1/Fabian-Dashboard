@@ -6,22 +6,22 @@ interface DicomViewerProps {
   onClose: () => void;
 }
 
+// Simulated DICOM metadata extraction
+const metadata = {
+  modality: "MR",
+  studyDate: "2024-05-12",
+  seriesDescription: "T2-Weighted Axial",
+  sliceThickness: "3.0mm",
+  resolution: "512x512",
+  bitDepth: "16-bit",
+  institution: "Bio-Integrator Virtual Lab"
+};
+
 export const DicomViewer: React.FC<DicomViewerProps> = ({ file, onClose }) => {
   const [brightness, setBrightness] = useState(100);
   const [contrast, setContrast] = useState(100);
   const [zoom, setZoom] = useState(1);
   const [isAnonymized, setIsAnonymized] = useState(true);
-
-  // Simulated DICOM metadata extraction
-  const metadata = {
-    modality: "MR",
-    studyDate: "2024-05-12",
-    seriesDescription: "T2-Weighted Axial",
-    sliceThickness: "3.0mm",
-    resolution: "512x512",
-    bitDepth: "16-bit",
-    institution: "Bio-Integrator Virtual Lab"
-  };
 
   return (
     <div className="fixed inset-0 z-[100] bg-black flex flex-col font-mono text-xs uppercase tracking-wider text-emerald-500/80">
