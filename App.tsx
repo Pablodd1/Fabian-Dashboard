@@ -8,6 +8,10 @@ import { DisclaimerModal } from './components/DisclaimerModal.tsx';
 import { RegistrationModal } from './components/RegistrationModal.tsx';
 import { AppView, PatientData } from './types.ts';
 import { analyzePatientData } from './services/geminiService.ts';
+import { apiKey } from './services/env.ts';
+import { apiKey } from './services/env.ts';
+import { apiKey } from './services/env.ts';
+import { apiKey } from './services/env.ts';
 
 const DEMO_PATIENT_COMPLETE: PatientData = {
   id: 'demo-1',
@@ -52,7 +56,7 @@ const App: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   
-  const apiKeyDetected = !!process.env.API_KEY;
+  const apiKeyDetected = !!apiKey;
 
   const activePatient = patients.find(p => p.id === selectedPatientId) || null;
 
