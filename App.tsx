@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Sidebar } from './components/Sidebar.tsx';
 import { Header } from './components/Header.tsx';
 import { IngestionPanel } from './components/IngestionPanel.tsx';
-import { AnalysisReport } from './components/AnalysisReport.tsx';
 import { PatientList } from './components/PatientList.tsx';
 import { DisclaimerModal } from './components/DisclaimerModal.tsx';
+
+const AnalysisReport = lazy(() => import('./components/AnalysisReport.tsx').then(module => ({ default: module.AnalysisReport })));
 import { RegistrationModal } from './components/RegistrationModal.tsx';
 import { AppView, PatientData } from './types.ts';
 import { analyzePatientData } from './services/geminiService.ts';
@@ -148,11 +149,17 @@ const App: React.FC = () => {
           )}
 
           {currentView === AppView.ANALYSIS && activePatient && (
-            <AnalysisReport 
-              data={activePatient.analysisResult || null} 
-              onRetry={runAnalysis}
-              isAnalyzing={isAnalyzing}
-            />
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-full">
+                <div className="text-slate-400">Loading analysis module...</div>
+              </div>
+            }>
+              <AnalysisReport
+                data={activePatient.analysisResult || null}
+                onRetry={runAnalysis}
+                isAnalyzing={isAnalyzing}
+              />
+            </Suspense>
           )}
 
           {currentView === AppView.SETTINGS && (
