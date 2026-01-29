@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AnalysisResult } from '../types.ts';
 import { ResponsiveContainer, RadialBarChart, RadialBar, Legend, Tooltip } from 'recharts';
 import { Beaker, Brain, Heart, ClipboardList, AlertCircle, Play, ScanEye, AlertTriangle, Pill, FileQuestion, TestTube, RefreshCw, Loader2 } from 'lucide-react';
@@ -10,12 +10,15 @@ interface AnalysisReportProps {
 }
 
 export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, onRetry, isAnalyzing }) => {
-  if (!data) return <div className="text-center text-slate-500 mt-20">No analysis generated yet.</div>;
+  const chartData = useMemo(() => {
+    if (!data) return [];
+    return [
+      { name: 'Longevity', uv: data.longevityScore, fill: '#10b981' },
+      { name: 'Brain Power', uv: data.brainPowerScore, fill: '#818cf8' },
+    ];
+  }, [data?.longevityScore, data?.brainPowerScore]);
 
-  const chartData = [
-    { name: 'Longevity', uv: data.longevityScore, fill: '#10b981' },
-    { name: 'Brain Power', uv: data.brainPowerScore, fill: '#818cf8' },
-  ];
+  if (!data) return <div className="text-center text-slate-500 mt-20">No analysis generated yet.</div>;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
