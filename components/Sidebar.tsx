@@ -7,14 +7,14 @@ interface SidebarProps {
   onChangeView: (view: AppView) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView }) => {
-  const navItems = [
-    { id: AppView.PATIENT_LIST, icon: Database, label: 'Patient Database' },
-    { id: AppView.INGESTION, icon: FileText, label: 'Data Ingestion' },
-    { id: AppView.ANALYSIS, icon: Activity, label: 'Analysis Report' },
-    { id: AppView.SETTINGS, icon: Settings, label: 'Settings' },
-  ];
+const navItems = [
+  { id: AppView.PATIENT_LIST, icon: Database, label: 'Patient Database' },
+  { id: AppView.INGESTION, icon: FileText, label: 'Data Ingestion' },
+  { id: AppView.ANALYSIS, icon: Activity, label: 'Analysis Report' },
+  { id: AppView.SETTINGS, icon: Settings, label: 'Settings' },
+];
 
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView }) => {
   return (
     <div className="w-20 lg:w-64 flex-shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col h-screen sticky top-0">
       <div className="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-800">
