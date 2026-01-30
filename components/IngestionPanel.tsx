@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 /* Added Database icon to the import list to fix the compilation error on line 191 */
 import { Upload, Mic, File as FileIcon, X, Plus, Image as ImageIcon, Loader2, FileAudio, Edit2, Check, Maximize2, Activity as ActivityIcon, ScanEye, Trash2, Play, Info, Database } from 'lucide-react';
 import { PatientData, FileRecord, ImageRecord, AudioRecord } from '../types.ts';
@@ -14,6 +14,62 @@ interface IngestionPanelProps {
 }
 
 type TranscriptionStatus = 'idle' | 'loading' | 'error' | 'success';
+
+interface NotesEditorProps {
+  initialNotes: string;
+  onUpdate: (notes: string) => void;
+}
+
+const NotesEditor: React.FC<NotesEditorProps> = ({ initialNotes, onUpdate }) => {
+  const [localNotes, setLocalNotes] = useState(initialNotes);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const lastEmittedValue = useRef(initialNotes);
+
+  useEffect(() => {
+    // If external source updated notes (not our own echo), sync local state
+    if (initialNotes !== lastEmittedValue.current) {
+      setLocalNotes(initialNotes);
+      lastEmittedValue.current = initialNotes;
+      // Cancel any pending local overwrite since we accepted external truth
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    }
+  }, [initialNotes]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    setLocalNotes(newValue);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      lastEmittedValue.current = newValue;
+      onUpdate(newValue);
+    }, 500);
+  };
+
+  const handleBlur = () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      lastEmittedValue.current = localNotes;
+      onUpdate(localNotes);
+    }
+  };
+
+  return (
+    <textarea
+      value={localNotes}
+      onChange={handleNotesChange}
+      onBlur={handleBlur}
+      className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-5 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[220px] transition-all placeholder:text-slate-700"
+      placeholder="Inject clinical observations, symptom clusters, or medical history..."
+    />
+  );
+};
 
 export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdatePatient, onAnalyze, isAnalyzing }) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -233,11 +289,10 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
                 <Edit2 className="w-5 h-5 text-indigo-400" /> Clinical Vault
               </h3>
             </div>
-            <textarea
-              value={patient.notes}
-              onChange={(e) => onUpdatePatient({ notes: e.target.value })}
-              className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-6 py-5 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 min-h-[220px] transition-all placeholder:text-slate-700"
-              placeholder="Inject clinical observations, symptom clusters, or medical history..."
+            <NotesEditor
+              key={patient.id}
+              initialNotes={patient.notes}
+              onUpdate={(notes) => onUpdatePatient({ notes })}
             />
           </div>
 
