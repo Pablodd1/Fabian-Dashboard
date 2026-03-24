@@ -9,45 +9,160 @@ import { RegistrationModal } from './components/RegistrationModal.tsx';
 import { AppView, PatientData } from './types.ts';
 import { analyzePatientData } from './services/geminiService.ts';
 
-const DEMO_PATIENT_COMPLETE: PatientData = {
-  id: 'demo-1',
-  codeName: 'Cassandra Nova Vance',
-  age: 38,
-  gender: 'Female',
-  status: 'Complete',
-  location: { birth: 'Berlin, Germany', current: 'Los Angeles, CA' },
-  notes: 'High-performing executive with chronic fatigue, evening brain fog, and intermittent joint pain in the mornings.',
-  files: [{ id: 'f1', name: 'DNA_Metabolic_SNP_Report.txt', type: 'text/plain', content: 'MTHFR C677T Heterozygous.' }],
-  audioRecordings: [],
-  images: [{ id: 'i1', name: 'Right_Knee_MRI.jpg', url: 'https://images.unsplash.com/photo-1530243627471-d1f2e96291ba?auto=format&fit=crop&q=80&w=200', base64: 'data:image/jpeg;base64,/', mimeType: 'image/jpeg' }],
-  rawMetrics: [
-    { source: 'Oura', key: 'Sleep Score', value: 64 },
-    { source: 'Whoop', key: 'HRV', value: 28 }
-  ],
-  analysisResult: {
-    rootCause: ["Chronic HPA-axis dysregulation", "Methylation pathway impairment"],
-    brainPowerScore: 72,
-    longevityScore: 68,
-    imagingFindings: ["Mild effusion in the suprapatellar bursa"],
-    missingLabs: ["Full Cyrex Array 3/4"],
-    discoveryQuestions: ["Is the joint pain improved with heat or cold?"],
-    nutrientDepletions: ["Low Serum Folate"],
-    therapeuticSynergies: ["Methyl-Folate and B12"],
-    lifestyleRecommendations: ["Evening infrared sauna"],
-    peptideProtocol: [
-      { name: "BPC-157", dosage: "250mcg BID", mechanism: "Angiogenesis", expectedOutcome: "Resolution of effusion" }
+const DEMO_PATIENTS: PatientData[] = [
+  {
+    id: 'demo-1',
+    codeName: 'Arthur Vanguard Morgan',
+    age: 52,
+    gender: 'Male',
+    status: 'Complete',
+    location: { birth: 'London, UK', current: 'Miami, FL' },
+    notes: 'Presents with systemic insulin resistance, elevated visceral fat, and nocturnal apnea patterns. High stress environment.',
+    files: [{ id: 'f1', name: 'Metabolic_Panel_Q4.pdf', type: 'application/pdf', content: 'HbA1c: 5.9, Triglycerides: 210, HDL: 38.' }],
+    audioRecordings: [],
+    images: [{ id: 'i1', name: 'Liver_Ultrasound.jpg', url: 'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=200', base64: 'data:image/jpeg;base64,/', mimeType: 'image/jpeg' }],
+    rawMetrics: [
+      { source: 'Oura', key: 'Sleep Score', value: 48 },
+      { source: 'Whoop', key: 'Recovery', value: 12 }
     ],
-    labOrders: [
-      { testName: "Comprehensive Metabolic Panel", cptCode: "80053", reason: "Baseline" }
+    analysisResult: {
+      rootCause: ["Hyperinsulinemia", "Non-alcoholic fatty liver progression", "Circadian misalignment"],
+      brainPowerScore: 58,
+      longevityScore: 52,
+      imagingFindings: ["Signs of Grade 1 Steatosis in liver ultrasound"],
+      missingLabs: ["ApoB/ApoA1 Ratio", "Adiponectin", "Fast Insulin (C-Peptide)"],
+      discoveryQuestions: ["Do you experience post-prandial somnolence daily?", "How many hours after sunset is your last meal?"],
+      nutrientDepletions: ["Thiamine (B1)", "Magnesium Malate", "Zinc"],
+      therapeuticSynergies: ["Berberine with Alpha Lipoic Acid"],
+      lifestyleRecommendations: ["Zone 2 cardio (45 min 4x/week)", "Strict 10-hour feeding window", "Blue light blocking after 8 PM"],
+      peptideProtocol: [
+        { name: "Tesamorelin", dosage: "2mg daily", mechanism: "GHRH Analogue", expectedOutcome: "Visceral fat reduction" },
+        { name: "MOTS-c", dosage: "5mg 3x/week", mechanism: "Mitochondrial ORF", expectedOutcome: "Improved insulin sensitivity" }
+      ],
+      labOrders: [
+        { testName: "NMR LipoProfile", cptCode: "80061", reason: "Advanced lipid assessment" }
+      ],
+      summary: "Patient Arthur is in a significant metabolic deficit. Focus on glucose disposal and liver health.",
+      disclaimer: "Educational Prototype Content."
+    },
+    chatHistory: []
+  },
+  {
+    id: 'demo-2',
+    codeName: 'Elena Cipher Gilbert',
+    age: 29,
+    gender: 'Female',
+    status: 'Complete',
+    location: { birth: 'Seattle, WA', current: 'Austin, TX' },
+    notes: 'Chronic fatigue syndrome, recurring skin rashes, and brain fog following meal consumption. Suspected mold exposure.',
+    files: [{ id: 'f2', name: 'Mycotoxin_Report.txt', type: 'text/plain', content: 'Ochratoxin A: High, Gliotoxin: Moderate.' }],
+    audioRecordings: [],
+    images: [],
+    rawMetrics: [
+      { source: 'Whoop', key: 'HRV', value: 92 },
+      { source: 'Oura', key: 'Readiness', value: 88 }
     ],
-    summary: "Patient presents with a mismatch between demand and recovery capabilities.",
-    disclaimer: "Educational Prototype Content."
+    analysisResult: {
+      rootCause: ["Mycotoxin-driven immunotoxicity", "Intestinal permeability (Leaky Gut)", "Mast Cell Activation"],
+      brainPowerScore: 64,
+      longevityScore: 78,
+      imagingFindings: [],
+      missingLabs: ["TGF-Beta 1", "C4a", "HLA-DR Multilocus"],
+      discoveryQuestions: ["Is there visible water damage in your current residence?", "Does your brain fog improve with fasting?"],
+      nutrientDepletions: ["Glutathione", "Activated Charcoal (Binders)", "Molybdenum"],
+      therapeuticSynergies: ["Quercetin with Vitamin C"],
+      lifestyleRecommendations: ["Infrared sauna (bi-daily)", "Air purification (HEPA/PECO)", "Low-amylose diet"],
+      peptideProtocol: [
+        { name: "KPV", dosage: "200mcg BID", mechanism: "Anti-inflammatory", expectedOutcome: "Reduction in gut inflammation" },
+        { name: "VIP", dosage: "50mcg nasal", mechanism: "Neuropeptide", expectedOutcome: "HPA-axis normalization" }
+      ],
+      labOrders: [
+        { testName: "Cyrex Array 2 (Gut)", cptCode: "82784", reason: "Assess barrier integrity" }
+      ],
+      summary: "Elena presents with a classic environmentally-triggered inflammatory response. Detoxification pathways need support.",
+      disclaimer: "Educational Prototype Content."
+    },
+    chatHistory: []
+  },
+  {
+    id: 'demo-3',
+    codeName: 'Marcus Aurelius Zen',
+    age: 34,
+    gender: 'Male',
+    status: 'Complete',
+    location: { birth: 'Rome, Italy', current: 'San Francisco, CA' },
+    notes: 'High-performance athlete focus. Recent drop in power output, low libido, and slow recovery from sessions.',
+    files: [],
+    audioRecordings: [],
+    images: [{ id: 'i2', name: 'Shoulder_MRI.jpg', url: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&q=80&w=200', base64: 'data:image/jpeg;base64,/', mimeType: 'image/jpeg' }],
+    rawMetrics: [
+      { source: 'Whoop', key: 'Strain', value: 18.2 },
+      { source: 'Oura', key: 'HRV', value: 110 }
+    ],
+    analysisResult: {
+      rootCause: ["Overtraining-induced hypogonadism", "Sub-optimal free Testosterone", "Chronic tendon micro-trauma"],
+      brainPowerScore: 84,
+      longevityScore: 91,
+      imagingFindings: ["Mild tendinosis in the supraspinatus tendon"],
+      missingLabs: ["Free/Total Testosterone Ratio", "SHBG", "IGF-1"],
+      discoveryQuestions: ["Has your explosive power decreased by more than 10%?", "How is your morning erectile quality?"],
+      nutrientDepletions: ["Vitamin D3", "Boron", "Cistanche"],
+      therapeuticSynergies: ["Zinc with Ashwagandha KSM-66"],
+      lifestyleRecommendations: ["Deload week (active recovery)", "Cold plunge (11°C for 3 min)", "Sleep hygiene optimization"],
+      peptideProtocol: [
+        { name: "BPC-157", dosage: "250mcg daily", mechanism: "Healing", expectedOutcome: "Tendon repair" },
+        { name: "Enclomiphene", dosage: "12.5mg daily", mechanism: "SERM", expectedOutcome: "Endogenous Test boost" }
+      ],
+      labOrders: [
+        { testName: "Comprehensive Male Elite", cptCode: "80048", reason: "Hormonal optimization" }
+      ],
+      summary: "Marcus is hitting a recovery ceiling. Need to pivot from high volume to high quality hormonal support.",
+      disclaimer: "Educational Prototype Content."
+    },
+    chatHistory: []
+  },
+  {
+    id: 'demo-4',
+    codeName: 'Seraphina Aether Moon',
+    age: 65,
+    gender: 'Female',
+    status: 'Complete',
+    location: { birth: 'Kyoto, Japan', current: 'New York, NY' },
+    notes: 'Longevity optimization patient. Interested in senolytics, cognitive preservation, and biological age reversal.',
+    files: [{ id: 'f3', name: 'BioAge_Report_2025.pdf', type: 'application/pdf', content: 'Biological Age: 54, DNA Methylation: Optimal.' }],
+    audioRecordings: [],
+    images: [],
+    rawMetrics: [
+      { source: 'Oura', key: 'Sleep Score', value: 94 },
+      { source: 'Whoop', key: 'Recovery', value: 98 }
+    ],
+    analysisResult: {
+      rootCause: ["Cellular senescence accumulation", "NAD+ decline", "Decreasing osteoblastic activity"],
+      brainPowerScore: 92,
+      longevityScore: 95,
+      imagingFindings: [],
+      missingLabs: ["NAD+ levels", "DEXA Scan (Bone)", "GrimAge Clock"],
+      discoveryQuestions: ["Any family history of early-onset neurodegeneration?", "How is your balance/proprioception?"],
+      nutrientDepletions: ["NMN", "Resveratrol", "TMG"],
+      therapeuticSynergies: ["Spermidine with Autophagy"],
+      lifestyleRecommendations: ["Resistance training (3x/week)", "High-polyphenol diet", "Meditation (20 min daily)"],
+      peptideProtocol: [
+        { name: "Epitalon", dosage: "10mg/cycle", mechanism: "Telomerase", expectedOutcome: "DNA protection" },
+        { name: "GHK-Cu", dosage: "2mg daily", mechanism: "Copper peptide", expectedOutcome: "Skin and tissue rejuvenation" }
+      ],
+      labOrders: [
+        { testName: "TruDiagnostic DNAm", cptCode: "81479", reason: "Biological age tracking" }
+      ],
+      summary: "Seraphina is an elite longevity patient. Strategy is now focus on maintenance of cellular integrity.",
+      disclaimer: "Educational Prototype Content."
+    },
+    chatHistory: []
   }
-};
+];
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.PATIENT_LIST);
-  const [patients, setPatients] = useState<PatientData[]>([DEMO_PATIENT_COMPLETE]);
+  const [patients, setPatients] = useState<PatientData[]>(DEMO_PATIENTS);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);

@@ -149,6 +149,7 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
           <div className="relative w-full h-full flex flex-col items-center justify-center gap-6" onClick={e => e.stopPropagation()}>
             <button 
               onClick={() => setSelectedImage(null)} 
+              title="Close Image Preview"
               className="absolute top-0 right-0 p-4 text-slate-400 hover:text-white transition-colors"
             >
               <X className="w-10 h-10" />
@@ -185,6 +186,7 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
                 )}
                 <button 
                   onClick={() => { removeImage(selectedImage.id); setSelectedImage(null); }}
+                  title="Remove Image"
                   className="p-4 bg-red-500/10 text-red-400 rounded-2xl hover:bg-red-500/20 transition-all border border-red-500/20"
                 >
                   <Trash2 className="w-5 h-5" />
@@ -295,6 +297,7 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
                     )}
                     <button 
                       onClick={(e) => { e.stopPropagation(); removeImage(img.id); }}
+                      title="Delete Asset"
                       className="absolute top-3 right-3 p-2 bg-slate-900/80 text-red-400 rounded-xl opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all backdrop-blur"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -333,6 +336,7 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
                         <audio src={rec.url} controls className="h-8 w-40 opacity-50 hover:opacity-100 transition-opacity" />
                         <button 
                           onClick={() => removeAudio(rec.id)}
+                          title="Delete Recording"
                           className="p-3 text-slate-600 hover:text-red-400 transition-colors"
                         >
                           <Trash2 className="w-5 h-5" />
@@ -389,7 +393,7 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button className="p-2 text-slate-700 hover:text-slate-300 transition-colors">
+                      <button title="File Info" className="p-2 text-slate-700 hover:text-slate-300 transition-colors">
                         <Info className="w-4 h-4" />
                       </button>
                     </div>

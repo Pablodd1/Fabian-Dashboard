@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AnalysisResult, PatientData } from '../types.ts';
 import { ResponsiveContainer, RadialBarChart, RadialBar, Legend, Tooltip } from 'recharts';
-import { Beaker, Brain, Heart, ClipboardList, AlertCircle, Play, ScanEye, AlertTriangle, Pill, FileQuestion, TestTube, RefreshCw, Loader2, Download, Mail, Save, MessageSquare, Send, FileText } from 'lucide-react';
+import { Beaker, Brain, Heart, ClipboardList, AlertCircle, Play, ScanEye, AlertTriangle, Pill, FileQuestion, TestTube, RefreshCw, Loader2, Download, Mail, Save, MessageSquare, Send, FileText, Zap, Calendar, TrendingUp } from 'lucide-react';
 import { askAIChat } from '../services/geminiService.ts';
 
 interface AnalysisReportProps {
@@ -309,7 +309,7 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, patient, o
       </div>
 
       {/* AI Chat Window */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden mt-8 print-hide">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden mt-8 print-hide shadow-2xl">
         <div className="p-6 border-b border-slate-700 bg-slate-800/50 flex items-center gap-3">
           <MessageSquare className="w-6 h-6 text-indigo-400" />
           <h3 className="text-xl font-bold text-white">Clinical AI Assistant</h3>
@@ -336,7 +336,7 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, patient, o
             value={chatInput}
             onChange={e => setChatInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleAskAI()}
-            placeholder="Ask questions about this patient's data (e.g. 'What was their TSH level?')" 
+            placeholder="Ask questions about this patient's data..." 
             className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500"
           />
           <button 
@@ -349,25 +349,80 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, patient, o
         </div>
       </div>
 
+      {/* ADDITIONAL PREMIUM CARDS */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8">
+        {/* Wearable Pulse Card */}
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 relative overflow-hidden group shadow-2xl">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+             <Zap className="w-16 h-16 text-yellow-400" />
+          </div>
+          <div className="flex items-center gap-3 mb-6">
+            <Zap className="w-6 h-6 text-yellow-500" />
+            <h3 className="text-xl font-bold text-white">Wearable Deep Pulse</h3>
+          </div>
+          <div className="space-y-4">
+            {patient.rawMetrics.map((m, idx) => (
+              <div key={idx} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase font-black tracking-widest text-slate-500">{m.source}</p>
+                  <p className="text-white font-bold">{m.key}</p>
+                </div>
+                <div className="text-2xl font-black text-indigo-400">{m.value}</div>
+              </div>
+            ))}
+            {patient.rawMetrics.length === 0 && (
+               <p className="text-slate-500 italic text-sm text-center py-4">No real-time data synced.</p>
+            )}
+          </div>
+          <div className="mt-6 pt-6 border-t border-slate-800 flex items-center justify-between text-[10px] font-black uppercase text-indigo-400 tracking-widest cursor-pointer hover:text-indigo-300">
+            <span>Historical Trends</span>
+            <TrendingUp className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* 90-Day Optimization Roadmap */}
+        <div className="lg:col-span-2 bg-indigo-950/10 border border-indigo-500/20 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+          <div className="flex items-center gap-4 mb-8">
+            <Calendar className="w-7 h-7 text-indigo-400" />
+            <h3 className="text-2xl font-black text-white tracking-tight">Phase 1 Optimization Roadmap (90 Days)</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+             <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-indigo-500/10 -translate-y-1/2 hidden md:block"></div>
+             {[
+               { title: "Stabilization", color: "bg-orange-500", text: "Seal gut lining & dampen chronic HPA activation." },
+               { title: "Detoxification", color: "bg-emerald-500", text: "Upregulate Phase II liver detox & bind toxins." },
+               { title: "Enhancement", color: "bg-indigo-500", text: "Peptide load & mitochondrial biogenesis peak." }
+             ].map((phase, idx) => (
+               <div key={idx} className="relative z-10 bg-slate-950/80 p-5 rounded-2xl border border-indigo-500/10 group hover:border-indigo-500/30 transition-all">
+                 <div className={`w-8 h-8 rounded-full ${phase.color} mb-4 flex items-center justify-center text-white font-black text-xs shadow-lg`}>{idx + 1}</div>
+                 <h4 className="font-bold text-white mb-2">{phase.title}</h4>
+                 <p className="text-xs text-slate-400 leading-relaxed">{phase.text}</p>
+               </div>
+             ))}
+          </div>
+        </div>
+      </div>
+
       {showPreVisit && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-8 space-y-6">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-8 space-y-6 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
              <div className="flex justify-between items-center bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20">
                <div>
                  <h2 className="text-2xl font-black text-indigo-400">Pre-Visit Briefing</h2>
                  <p className="text-sm text-slate-400 uppercase tracking-widest">{patient.codeName}</p>
                </div>
-               <button onClick={() => setShowPreVisit(false)} className="text-slate-500 hover:text-white">Close</button>
+               <button onClick={() => setShowPreVisit(false)} className="text-slate-500 hover:text-white transition-colors">Close</button>
              </div>
              <div className="space-y-4 text-slate-300">
                <h3 className="font-bold text-lg text-white">Summary</h3>
                <p>{data.summary}</p>
                <h3 className="font-bold text-lg text-red-400 mt-4">Critical Flags</h3>
-               <ul className="list-disc pl-5">
+               <ul className="list-disc pl-5 space-y-1">
                  {data.missingLabs.map((l, i) => <li key={i}>{l}</li>)}
                </ul>
                <h3 className="font-bold text-lg text-emerald-400 mt-4">Top Targets</h3>
-               <ul className="list-disc pl-5">
+               <ul className="list-disc pl-5 space-y-1">
                  {data.rootCause.map((c, i) => <li key={i}>{c}</li>)}
                </ul>
              </div>
