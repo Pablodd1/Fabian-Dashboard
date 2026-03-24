@@ -60,8 +60,10 @@ export const analyzePatientData = async (patient: PatientData): Promise<Analysis
     const parts: any[] = [];
 
     let promptText = `
-      ROLE: World-Class Functional Medicine Strategist.
-      TASK: Synthesize the following patient data into a root-cause analysis report.
+      ROLE: World-Class Functional Medicine Doctor and Strategist.
+      TASK: Synthesize the following patient data into a comprehensive, user-friendly, root-cause analysis medical report. 
+      Ensure proper OCR and extraction from ALL provided documents without limitation. Use the data to drastically improve the recommendations.
+      RED FLAG any missing markers or labs that are required for further comprehensive investigation and better decision making.
       PATIENT PROFILE: ${patient.codeName}, ${patient.age}y ${patient.gender}.
       WEARABLE METRICS: ${JSON.stringify(patient.rawMetrics)}
       CLINICAL NOTES: ${patient.notes}
@@ -83,6 +85,22 @@ export const analyzePatientData = async (patient: PatientData): Promise<Analysis
         } 
       });
       parts.push({ text: `Analyze patient imaging asset: ${img.name}` });
+    }
+
+    // Include document OCR/data extraction
+    for (const f of patient.files) {
+      if (f.base64) {
+        const base64Data = f.base64.split(',')[1] || f.base64;
+        parts.push({ 
+          inlineData: { 
+             mimeType: f.type || 'application/pdf', 
+             data: base64Data 
+          } 
+        });
+        parts.push({ text: `Extract all medical data and perform OCR from this document: ${f.name}` });
+      } else if (f.content) {
+        parts.push({ text: `Content from document ${f.name}: ${f.content}` });
+      }
     }
 
     const response = await ai.models.generateContent({
@@ -139,5 +157,31 @@ export const analyzePatientData = async (patient: PatientData): Promise<Analysis
   } catch (error) {
     console.error("Engine Reasoning Error:", error);
     throw error;
+  }
+};
+
+export const askAIChat = async (patient: PatientData, question: string): Promise<string> => {
+  try {
+    const ai = getAIClient();
+    const parts: any[] = [];
+
+    parts.push({ text: `
+      ROLE: Clinical Assistant AI.
+      TASK: Answer the practitioner's question based strictly on the patient data provided.
+      PATIENT PROFILE: ${patient.codeName}, ${patient.age}y ${patient.gender}.
+      WEARABLE METRICS: ${JSON.stringify(patient.rawMetrics)}
+      CLINICAL NOTES: ${patient.notes}
+      QUESTION: ${question}
+    ` });
+
+    const response = await ai.models.generateContent({
+      model: ANALYSIS_MODEL,
+      contents: [{ parts }],
+    });
+
+    return response.text || "No insights found.";
+  } catch (err) {
+    console.error("AI Chat Error:", err);
+    throw new Error("Unable to query AI. Check API Key or connection.");
   }
 };

@@ -1,16 +1,40 @@
-import React from 'react';
-import { AnalysisResult } from '../types.ts';
+import React, { useState } from 'react';
+import { AnalysisResult, PatientData } from '../types.ts';
 import { ResponsiveContainer, RadialBarChart, RadialBar, Legend, Tooltip } from 'recharts';
-import { Beaker, Brain, Heart, ClipboardList, AlertCircle, Play, ScanEye, AlertTriangle, Pill, FileQuestion, TestTube, RefreshCw, Loader2 } from 'lucide-react';
+import { Beaker, Brain, Heart, ClipboardList, AlertCircle, Play, ScanEye, AlertTriangle, Pill, FileQuestion, TestTube, RefreshCw, Loader2, Download, Mail, Save, MessageSquare, Send, FileText } from 'lucide-react';
+import { askAIChat } from '../services/geminiService.ts';
 
 interface AnalysisReportProps {
   data: AnalysisResult | null;
+  patient: PatientData;
+  onUpdatePatient: (data: Partial<PatientData>) => void;
   onRetry?: () => void;
   isAnalyzing?: boolean;
 }
 
-export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, onRetry, isAnalyzing }) => {
+export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, patient, onUpdatePatient, onRetry, isAnalyzing }) => {
+  const [chatInput, setChatInput] = useState('');
+  const [isChatting, setIsChatting] = useState(false);
+  const [showPreVisit, setShowPreVisit] = useState(false);
+
   if (!data) return <div className="text-center text-slate-500 mt-20">No analysis generated yet.</div>;
+
+  const handleAskAI = async () => {
+    if (!chatInput.trim() || isChatting) return;
+    setIsChatting(true);
+    const newHistory = [...(patient.chatHistory || []), { role: 'user' as const, text: chatInput }];
+    onUpdatePatient({ chatHistory: newHistory });
+    setChatInput('');
+    
+    try {
+      const response = await askAIChat(patient, chatInput);
+      onUpdatePatient({ chatHistory: [...newHistory, { role: 'ai' as const, text: response }] });
+    } catch (err) {
+      alert("Failed to query AI.");
+    } finally {
+      setIsChatting(false);
+    }
+  };
 
   const chartData = [
     { name: 'Longevity', uv: data.longevityScore, fill: '#10b981' },
@@ -26,20 +50,46 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, onRetry, i
           <div className="col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-3xl font-bold text-white tracking-tight">Executive Health Summary</h2>
-              {onRetry && (
+              <div className="flex items-center gap-3">
                 <button
-                  onClick={onRetry}
-                  disabled={isAnalyzing}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+                  onClick={() => alert("Patient record saved successfully.")}
+                  className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-semibold transition-all"
                 >
-                  {isAnalyzing ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="w-4 h-4" />
-                  )}
-                  {isAnalyzing ? "Recalculating..." : "Retry Analysis"}
+                  <Save className="w-4 h-4" /> Save
                 </button>
-              )}
+                <button
+                  onClick={() => setShowPreVisit(true)}
+                  className="flex items-center gap-2 px-3 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-sm font-semibold transition-all"
+                >
+                  <FileText className="w-4 h-4" /> Pre-Visit Brief
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-semibold transition-all"
+                >
+                  <Download className="w-4 h-4" /> PDF
+                </button>
+                <button
+                  onClick={() => window.location.href = `mailto:?subject=Functional Medicine Lab Report&body=Review your comprehensive medical extraction here: ${data.summary}`}
+                  className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-semibold transition-all"
+                >
+                  <Mail className="w-4 h-4" /> Email
+                </button>
+                {onRetry && (
+                  <button
+                    onClick={onRetry}
+                    disabled={isAnalyzing}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+                  >
+                    {isAnalyzing ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                    {isAnalyzing ? "Recalculating..." : "Retry Analysis"}
+                  </button>
+                )}
+              </div>
             </div>
             <p className="text-slate-400 leading-relaxed text-lg">{data.summary}</p>
             
@@ -82,18 +132,21 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, onRetry, i
       {/* GAP ANALYSIS ROW */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        {/* Missing Labs */}
-        <div className="bg-orange-950/20 border border-orange-500/30 rounded-2xl p-6">
-           <div className="flex items-center gap-3 mb-4 text-orange-400">
-             <TestTube className="w-6 h-6" />
-             <h3 className="text-xl font-bold">Missing Blood Panels (Red Flags)</h3>
+        {/* Missing Labs - RED FLAGS */}
+        <div className="bg-red-950/20 border border-red-500/50 rounded-2xl p-6 shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+           <div className="flex items-center gap-3 mb-4 text-red-500 animate-pulse">
+             <AlertTriangle className="w-6 h-6" />
+             <h3 className="text-xl font-bold">Red Flag: Missing Markers</h3>
+           </div>
+           <div className="text-xs text-red-400/80 mb-4 uppercase tracking-widest font-semibold font-mono border-b border-red-900/50 pb-2">
+             Required for further investigation & decision making
            </div>
            <div className="space-y-3">
              {data.missingLabs?.length > 0 ? (
                data.missingLabs.map((flag, idx) => (
-                 <div key={idx} className="flex items-start gap-3">
-                   <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2 flex-shrink-0" />
-                   <p className="text-orange-200/80 text-sm">{flag}</p>
+                 <div key={idx} className="flex items-start gap-3 bg-red-950/30 p-3 rounded-xl border border-red-500/20">
+                   <div className="w-2 h-2 rounded-full bg-red-500 mt-1.5 flex-shrink-0 shadow-[0_0_5px_rgba(239,68,68,0.8)]" />
+                   <p className="text-red-200/90 text-sm font-medium">{flag}</p>
                  </div>
                ))
              ) : (
@@ -254,6 +307,74 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, onRetry, i
 
         </div>
       </div>
+
+      {/* AI Chat Window */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden mt-8 print-hide">
+        <div className="p-6 border-b border-slate-700 bg-slate-800/50 flex items-center gap-3">
+          <MessageSquare className="w-6 h-6 text-indigo-400" />
+          <h3 className="text-xl font-bold text-white">Clinical AI Assistant</h3>
+        </div>
+        <div className="p-6 space-y-4 max-h-96 overflow-y-auto bg-slate-950/50">
+          {(patient.chatHistory || []).map((msg, idx) => (
+            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[80%] p-4 rounded-2xl ${msg.role === 'user' ? 'bg-indigo-500/20 text-indigo-100 border border-indigo-500/20' : 'bg-slate-800 text-slate-200 border border-slate-700'}`}>
+                {msg.text}
+              </div>
+            </div>
+          ))}
+          {isChatting && (
+            <div className="flex justify-start">
+              <div className="p-4 rounded-2xl bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" /> Querying knowledge base...
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="p-4 border-t border-slate-700 bg-slate-900 flex gap-4">
+          <input 
+            type="text" 
+            value={chatInput}
+            onChange={e => setChatInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAskAI()}
+            placeholder="Ask questions about this patient's data (e.g. 'What was their TSH level?')" 
+            className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-indigo-500"
+          />
+          <button 
+            onClick={handleAskAI}
+            disabled={isChatting || !chatInput.trim()}
+            className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-all disabled:opacity-50 flex items-center gap-2"
+          >
+            <Send className="w-4 h-4" /> Send
+          </button>
+        </div>
+      </div>
+
+      {showPreVisit && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-8 space-y-6">
+             <div className="flex justify-between items-center bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20">
+               <div>
+                 <h2 className="text-2xl font-black text-indigo-400">Pre-Visit Briefing</h2>
+                 <p className="text-sm text-slate-400 uppercase tracking-widest">{patient.codeName}</p>
+               </div>
+               <button onClick={() => setShowPreVisit(false)} className="text-slate-500 hover:text-white">Close</button>
+             </div>
+             <div className="space-y-4 text-slate-300">
+               <h3 className="font-bold text-lg text-white">Summary</h3>
+               <p>{data.summary}</p>
+               <h3 className="font-bold text-lg text-red-400 mt-4">Critical Flags</h3>
+               <ul className="list-disc pl-5">
+                 {data.missingLabs.map((l, i) => <li key={i}>{l}</li>)}
+               </ul>
+               <h3 className="font-bold text-lg text-emerald-400 mt-4">Top Targets</h3>
+               <ul className="list-disc pl-5">
+                 {data.rootCause.map((c, i) => <li key={i}>{c}</li>)}
+               </ul>
+             </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

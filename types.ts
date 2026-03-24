@@ -22,6 +22,12 @@ export interface PatientData {
     current: string;
   };
   analysisResult?: AnalysisResult | null; // Persist analysis per patient
+  chatHistory?: ChatMessage[];
+}
+
+export interface ChatMessage {
+  role: 'user' | 'ai';
+  text: string;
 }
 
 export interface FileRecord {
@@ -29,6 +35,7 @@ export interface FileRecord {
   name: string;
   type: string;
   content: string; 
+  base64?: string;
 }
 
 export interface AudioRecord {

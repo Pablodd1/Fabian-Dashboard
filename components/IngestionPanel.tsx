@@ -53,13 +53,22 @@ export const IngestionPanel: React.FC<IngestionPanelProps> = ({ patient, onUpdat
            });
            await promise;
         } else {
-          const text = await file.text().catch(() => "Binary content placeholder");
-          newFiles.push({
-            id: Math.random().toString(36).substr(2, 9),
-            name: file.name,
-            type: file.type,
-            content: text
+          const reader = new FileReader();
+          const promise = new Promise<void>((resolve) => {
+            reader.onload = (ev) => {
+              const base64 = ev.target?.result as string;
+              newFiles.push({
+                id: Math.random().toString(36).substr(2, 9),
+                name: file.name,
+                type: file.type,
+                content: "Base64 Content",
+                base64
+              });
+              resolve();
+            };
+            reader.readAsDataURL(file);
           });
+          await promise;
         }
       }
       onUpdatePatient({ 

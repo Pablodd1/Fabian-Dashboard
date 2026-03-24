@@ -81,7 +81,8 @@ const App: React.FC = () => {
       files: [],
       audioRecordings: [],
       images: [],
-      rawMetrics: []
+      rawMetrics: [],
+      chatHistory: []
     };
     setPatients(prev => [newPatient, ...prev]);
     setSelectedPatientId(newId);
@@ -149,6 +150,8 @@ const App: React.FC = () => {
 
           {currentView === AppView.ANALYSIS && activePatient && (
             <AnalysisReport 
+              patient={activePatient}
+              onUpdatePatient={handleUpdatePatient}
               data={activePatient.analysisResult || null} 
               onRetry={runAnalysis}
               isAnalyzing={isAnalyzing}
