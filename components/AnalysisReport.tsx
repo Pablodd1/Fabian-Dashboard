@@ -131,7 +131,6 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, patient, o
 
       {/* GAP ANALYSIS ROW */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
         {/* Missing Labs - RED FLAGS */}
         <div className="bg-red-950/20 border border-red-500/50 rounded-2xl p-6 shadow-[0_0_20px_rgba(239,68,68,0.1)]">
            <div className="flex items-center gap-3 mb-4 text-red-500 animate-pulse">
@@ -178,7 +177,6 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, patient, o
 
       {/* PHARMACOLOGY ROW */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
         {/* Nutrient Depletions (Negative) */}
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
            <div className="flex items-center gap-3 mb-4 text-pink-400">
@@ -239,7 +237,6 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, patient, o
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
         {/* Peptide Protocol */}
         <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
           <div className="p-6 border-b border-slate-700 bg-slate-800/50 flex items-center gap-3">
@@ -269,7 +266,6 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, patient, o
 
         {/* Labs & Lifestyle */}
         <div className="space-y-8">
-          
           <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
             <div className="p-6 border-b border-slate-700 bg-slate-800/50 flex items-center gap-3">
               <ClipboardList className="w-6 h-6 text-blue-400" />
@@ -304,7 +300,6 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, patient, o
               ))}
             </ul>
           </div>
-
         </div>
       </div>
 
@@ -389,17 +384,100 @@ export const AnalysisReport: React.FC<AnalysisReportProps> = ({ data, patient, o
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-indigo-500/10 -translate-y-1/2 hidden md:block"></div>
-             {[
-               { title: "Stabilization", color: "bg-orange-500", text: "Seal gut lining & dampen chronic HPA activation." },
-               { title: "Detoxification", color: "bg-emerald-500", text: "Upregulate Phase II liver detox & bind toxins." },
-               { title: "Enhancement", color: "bg-indigo-500", text: "Peptide load & mitochondrial biogenesis peak." }
-             ].map((phase, idx) => (
-               <div key={idx} className="relative z-10 bg-slate-950/80 p-5 rounded-2xl border border-indigo-500/10 group hover:border-indigo-500/30 transition-all">
-                 <div className={`w-8 h-8 rounded-full ${phase.color} mb-4 flex items-center justify-center text-white font-black text-xs shadow-lg`}>{idx + 1}</div>
-                 <h4 className="font-bold text-white mb-2">{phase.title}</h4>
-                 <p className="text-xs text-slate-400 leading-relaxed">{phase.text}</p>
+             {data.optimizationRoadmap && data.optimizationRoadmap.length > 0 ? data.optimizationRoadmap.map((phaseData, idx) => {
+               const colors = ["bg-orange-500", "bg-emerald-500", "bg-indigo-500"];
+               return (
+                 <div key={idx} className="relative z-10 bg-slate-950/80 p-5 rounded-2xl border border-indigo-500/10 group hover:border-indigo-500/30 transition-all">
+                   <div className={`w-8 h-8 rounded-full ${colors[idx % colors.length]} mb-4 flex items-center justify-center text-white font-black text-xs shadow-lg`}>{idx + 1}</div>
+                   <h4 className="font-bold text-white mb-2">{phaseData.title}</h4>
+                   <p className="text-xs text-slate-400 leading-relaxed">{phaseData.description}</p>
+                 </div>
+               );
+             }) : (
+               <p className="text-slate-500 italic">No roadmap available.</p>
+             )}
+          </div>
+        </div>
+      </div>
+
+      {/* PERSONALIZED OPTIMIZATION LETTER */}
+      <div className="bg-white rounded-[2.5rem] p-12 shadow-2xl relative border-t-8 border-indigo-600 mt-12 mb-20 overflow-hidden">
+        <div className="absolute top-0 right-0 p-12 opacity-5">
+           <FileText className="w-48 h-48 text-indigo-900" />
+        </div>
+        <div className="relative z-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+            <div>
+              <div className="bg-indigo-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full inline-block uppercase tracking-[0.2em] mb-4 shadow-lg shadow-indigo-500/20">
+                Authorized Clinical Recommendation
+              </div>
+              <h3 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">Patient Optimization Protocol</h3>
+            </div>
+            <div className="flex gap-4">
+               <button className="h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 transition-all">
+                  <Save className="w-6 h-6" />
+               </button>
+               <button className="h-14 px-8 rounded-2xl bg-indigo-600 text-white font-black flex items-center gap-3 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/20 group">
+                  <Download className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
+                  Save Recommendation
+               </button>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-5 gap-12">
+            <div className="lg:col-span-3 space-y-8">
+              <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 shadow-inner">
+                 <p className="text-xl font-medium text-slate-800 leading-relaxed italic">
+                    "Dear {patient.codeName.split(' ')[0]}, we have analyzed your biomarkers in depth. The core objective of this protocol is to address {data.rootCause[0]} and {data.rootCause[1]} through targeted interventions."
+                 </p>
+              </div>
+
+              <div className="space-y-6">
+                <h4 className="text-xs font-black text-indigo-600 uppercase tracking-[0.3em]">Immediate Action Plan</h4>
+                <div className="grid gap-4">
+                  <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm flex items-start gap-4">
+                     <div className="h-10 w-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                        <Zap className="w-5 h-5" />
+                     </div>
+                     <div>
+                        <p className="font-bold text-slate-900 mb-1">Primary Optimization Focus</p>
+                        <p className="text-sm text-slate-500 leading-relaxed">Systemic focus on {data.rootCause[0]} using {data.therapeuticSynergies[0] || 'targeted nutrient support'}.</p>
+                     </div>
+                  </div>
+                  <div className="p-6 bg-white border border-slate-100 rounded-3xl shadow-sm flex items-start gap-4">
+                     <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                        <Heart className="w-5 h-5" />
+                     </div>
+                     <div>
+                        <p className="font-bold text-slate-900 mb-1">Lifestyle ROI</p>
+                        <p className="text-sm text-slate-500 leading-relaxed">Prioritize {data.lifestyleRecommendations[0]} for maximum physiological return.</p>
+                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2 space-y-8">
+               <div className="bg-slate-900 text-white p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
+                  <div className="absolute -top-10 -right-10 h-40 w-40 bg-indigo-500/20 rounded-full blur-3xl" />
+                  <h4 className="text-xs font-black text-indigo-400 uppercase tracking-[0.3em] mb-8">Clinical Summary</h4>
+                  <div className="space-y-6">
+                     <div className="flex justify-between items-end border-b border-white/10 pb-4">
+                        <span className="text-slate-400 text-sm">Longevity Index</span>
+                        <span className="text-3xl font-black text-emerald-400">{data.longevityScore}%</span>
+                     </div>
+                     <div className="flex justify-between items-end border-b border-white/10 pb-4">
+                        <span className="text-slate-400 text-sm">Cognitive Reserve</span>
+                        <span className="text-3xl font-black text-indigo-400">{data.brainPowerScore}%</span>
+                     </div>
+                     <div className="pt-4">
+                        <p className="text-xs text-slate-500 leading-relaxed">
+                          This protocol is designed specifically for {patient.id} following multimodal data ingestion including bloodwork, genomics, and medical imaging.
+                        </p>
+                     </div>
+                  </div>
                </div>
-             ))}
+            </div>
           </div>
         </div>
       </div>

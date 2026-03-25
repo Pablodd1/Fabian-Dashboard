@@ -80,6 +80,11 @@ export interface AnalysisResult {
     cptCode: string;
     reason: string;
   }[];
+  optimizationRoadmap: {
+    phase: string;
+    title: string;
+    description: string;
+  }[];
   disclaimer: string;
   summary: string;
 }

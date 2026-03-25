@@ -64,6 +64,7 @@ export const analyzePatientData = async (patient: PatientData): Promise<Analysis
       TASK: Synthesize the following patient data into a comprehensive, user-friendly, root-cause analysis medical report. 
       Ensure proper OCR and extraction from ALL provided documents without limitation. Use the data to drastically improve the recommendations.
       RED FLAG any missing markers or labs that are required for further comprehensive investigation and better decision making.
+      Provide a 3-phase Optimization Roadmap (Phase 1, Phase 2, Phase 3) tailored to this patient's specific needs.
       PATIENT PROFILE: ${patient.codeName}, ${patient.age}y ${patient.gender}.
       WEARABLE METRICS: ${JSON.stringify(patient.rawMetrics)}
       CLINICAL NOTES: ${patient.notes}
@@ -144,10 +145,22 @@ export const analyzePatientData = async (patient: PatientData): Promise<Analysis
                 }
               }
             },
+            optimizationRoadmap: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  phase: { type: Type.STRING, description: "Phase 1, Phase 2, or Phase 3" },
+                  title: { type: Type.STRING, description: "e.g. Stabilization, Detoxification" },
+                  description: { type: Type.STRING }
+                },
+                required: ["phase", "title", "description"]
+              }
+            },
             summary: { type: Type.STRING },
             disclaimer: { type: Type.STRING }
           },
-          required: ["rootCause", "summary", "brainPowerScore"]
+          required: ["rootCause", "summary", "brainPowerScore", "optimizationRoadmap"]
         }
       }
     });

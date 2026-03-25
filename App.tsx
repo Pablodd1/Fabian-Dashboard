@@ -43,6 +43,11 @@ const DEMO_PATIENTS: PatientData[] = [
         { testName: "NMR LipoProfile", cptCode: "80061", reason: "Advanced lipid assessment" }
       ],
       summary: "Patient Arthur is in a significant metabolic deficit. Focus on glucose disposal and liver health.",
+      optimizationRoadmap: [
+        { phase: "Phase 1", title: "Stabilization", description: "Seal gut lining & dampen chronic HPA activation." },
+        { phase: "Phase 2", title: "Detoxification", description: "Upregulate Phase II liver detox & bind toxins." },
+        { phase: "Phase 3", title: "Enhancement", description: "Peptide load & mitochondrial biogenesis peak." }
+      ],
       disclaimer: "Educational Prototype Content."
     },
     chatHistory: []
@@ -80,6 +85,11 @@ const DEMO_PATIENTS: PatientData[] = [
         { testName: "Cyrex Array 2 (Gut)", cptCode: "82784", reason: "Assess barrier integrity" }
       ],
       summary: "Elena presents with a classic environmentally-triggered inflammatory response. Detoxification pathways need support.",
+      optimizationRoadmap: [
+        { phase: "Phase 1", title: "Stabilization", description: "Binders and histimine suppression." },
+        { phase: "Phase 2", title: "Detoxification", description: "Vigorous toxin mobilization." },
+        { phase: "Phase 3", title: "Enhancement", description: "Mitochondrial repair and peptide healing." }
+      ],
       disclaimer: "Educational Prototype Content."
     },
     chatHistory: []
@@ -117,6 +127,11 @@ const DEMO_PATIENTS: PatientData[] = [
         { testName: "Comprehensive Male Elite", cptCode: "80048", reason: "Hormonal optimization" }
       ],
       summary: "Marcus is hitting a recovery ceiling. Need to pivot from high volume to high quality hormonal support.",
+      optimizationRoadmap: [
+        { phase: "Phase 1", title: "Rehabilitation", description: "Reduce workload to basic maintenance and repair." },
+        { phase: "Phase 2", title: "Hormone Rebalancing", description: "Stimulate endogenous testosterone and clear SHBG." },
+        { phase: "Phase 3", title: "Performance Enhancement", description: "Resume full load with added regenerative peptides." }
+      ],
       disclaimer: "Educational Prototype Content."
     },
     chatHistory: []
@@ -154,6 +169,11 @@ const DEMO_PATIENTS: PatientData[] = [
         { testName: "TruDiagnostic DNAm", cptCode: "81479", reason: "Biological age tracking" }
       ],
       summary: "Seraphina is an elite longevity patient. Strategy is now focus on maintenance of cellular integrity.",
+      optimizationRoadmap: [
+        { phase: "Phase 1", title: "Senescence Clearing", description: "Senolytic protocols and NAD+ boosting." },
+        { phase: "Phase 2", title: "Cellular Rejuvenation", description: "Epigenic modifier and telomere length management." },
+        { phase: "Phase 3", title: "Tissue Regeneration", description: "GHK-Cu and other advanced peptide cycles." }
+      ],
       disclaimer: "Educational Prototype Content."
     },
     chatHistory: []
