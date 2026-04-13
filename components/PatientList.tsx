@@ -96,23 +96,30 @@ export const PatientList: React.FC<PatientListProps> = ({ patients, onSelectPati
                     </div>
                   </td>
                   <td className="px-12 py-8 text-right">
-                    <div className="flex items-center justify-end gap-4">
+                    <div className="flex items-center justify-end gap-3">
                       <button 
                         onClick={() => onSelectPatient(p.id, AppView.INGESTION)}
-                        className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-white px-6 py-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-slate-700 transition-all active:scale-95"
+                        className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 hover:text-white px-4 py-2.5 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-slate-700 transition-all active:scale-95"
                       >
                         Ingest
                       </button>
                       <button 
+                        onClick={() => onSelectPatient(p.id, AppView.PERFORMANCE)}
+                        className="text-[10px] font-black uppercase tracking-[0.15em] px-4 py-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all flex items-center gap-2 active:scale-95"
+                      >
+                        Coach
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                      <button 
                         onClick={() => onSelectPatient(p.id, AppView.ANALYSIS)}
-                        className={`text-[11px] font-black uppercase tracking-[0.2em] px-6 py-3 rounded-2xl border transition-all flex items-center gap-3 active:scale-95 ${
+                        className={`text-[10px] font-black uppercase tracking-[0.15em] px-4 py-2.5 rounded-2xl border transition-all flex items-center gap-2 active:scale-95 ${
                           p.status === 'Complete' 
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20 shadow-lg shadow-emerald-500/5' 
                           : 'bg-indigo-500 text-white border-transparent hover:bg-indigo-400 shadow-[0_10px_30px_-10px_rgba(99,102,241,0.4)]'
                         }`}
                       >
-                        {p.status === 'Complete' ? 'Open Report' : 'Analyze'}
-                        <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-1`} />
+                        {p.status === 'Complete' ? 'Report' : 'Analyze'}
+                        <ChevronRight className="w-3 h-3 transition-transform group-hover:translate-x-1" />
                       </button>
                     </div>
                   </td>

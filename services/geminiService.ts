@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { PatientData, AnalysisResult } from "../types.ts";
+import { PatientData, AnalysisResult, PerformanceResult } from "../types.ts";
 
 // Model constants as per latest guidelines
 const ANALYSIS_MODEL = "gemini-3-pro-preview";
@@ -195,6 +195,150 @@ export const askAIChat = async (patient: PatientData, question: string): Promise
     return response.text || "No insights found.";
   } catch (err) {
     console.error("AI Chat Error:", err);
+    throw new Error("Unable to query AI. Check API Key or connection.");
+  }
+};
+
+export const generatePerformanceReport = async (patient: PatientData): Promise<PerformanceResult> => {
+  try {
+    const ai = getAIClient();
+    const parts: any[] = [];
+
+    let promptText = `
+      ROLE: Elite Performance Coach and Exercise Physiologist.
+      TASK: Analyze the athlete's wearable data, workout history, and recovery metrics to generate a personalized training plan and coaching report.
+      Extract ALL data from provided screenshots, CSVs, and documents using OCR.
+      PATIENT PROFILE: ${patient.codeName}, ${patient.age}y ${patient.gender}.
+      LOCATION: ${patient.location.current}.
+      WEARABLE METRICS: ${JSON.stringify(patient.rawMetrics)}
+      CLINICAL NOTES: ${patient.notes}
+    `;
+
+    parts.push({ text: promptText });
+
+    // Include uploaded images (screenshots from Whoop, Garmin, Strava)
+    for (const img of patient.images) {
+      const base64Data = img.base64.split(',')[1] || img.base64;
+      parts.push({
+        inlineData: {
+          mimeType: img.mimeType || 'image/jpeg',
+          data: base64Data
+        }
+      });
+      parts.push({ text: `Extract all training, recovery, and biometric data from this screenshot/document: ${img.name}` });
+    }
+
+    // Include files
+    for (const f of patient.files) {
+      if (f.base64) {
+        const base64Data = f.base64.split(',')[1] || f.base64;
+        parts.push({
+          inlineData: {
+            mimeType: f.type || 'text/plain',
+            data: base64Data
+          }
+        });
+        parts.push({ text: `Parse all workout and recovery data from this file: ${f.name}` });
+      } else if (f.content) {
+        parts.push({ text: `Content from file ${f.name}: ${f.content}` });
+      }
+    }
+
+    const response = await ai.models.generateContent({
+      model: ANALYSIS_MODEL,
+      contents: [{ parts: parts }],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            athleteProfile: {
+              type: Type.OBJECT,
+              properties: {
+                currentFitness: { type: Type.STRING },
+                strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+                weaknesses: { type: Type.ARRAY, items: { type: Type.STRING } },
+                injuryRisk: { type: Type.STRING, enum: ["low", "medium", "high"] }
+              },
+              required: ["currentFitness", "strengths", "weaknesses", "injuryRisk"]
+            },
+            trainingZones: {
+              type: Type.OBJECT,
+              properties: {
+                zone1: { type: Type.STRING },
+                zone2: { type: Type.STRING },
+                zone3: { type: Type.STRING },
+                zone4: { type: Type.STRING },
+                zone5: { type: Type.STRING }
+              },
+              required: ["zone1", "zone2", "zone3", "zone4", "zone5"]
+            },
+            weeklyPlan: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  day: { type: Type.STRING },
+                  focus: { type: Type.STRING },
+                  workout: { type: Type.STRING },
+                  duration: { type: Type.STRING },
+                  intensity: { type: Type.STRING, enum: ["easy", "moderate", "hard"] }
+                },
+                required: ["day", "focus", "workout", "duration", "intensity"]
+              }
+            },
+            keyMetrics: {
+              type: Type.OBJECT,
+              properties: {
+                vo2max: { type: Type.NUMBER },
+                threshold: { type: Type.STRING },
+                fatigueLevel: { type: Type.NUMBER },
+                form: { type: Type.NUMBER },
+                fitness: { type: Type.NUMBER }
+              },
+              required: ["fatigueLevel", "form", "fitness"]
+            },
+            recommendations: { type: Type.ARRAY, items: { type: Type.STRING } },
+            recoveryProtocol: { type: Type.ARRAY, items: { type: Type.STRING } },
+            nutritionTips: { type: Type.ARRAY, items: { type: Type.STRING } },
+            summary: { type: Type.STRING },
+            disclaimer: { type: Type.STRING }
+          },
+          required: ["athleteProfile", "trainingZones", "weeklyPlan", "keyMetrics", "summary", "disclaimer"]
+        }
+      }
+    });
+
+    const parsed = JSON.parse(response.text || "{}");
+    return parsed as PerformanceResult;
+  } catch (error) {
+    console.error("Performance Engine Error:", error);
+    throw error;
+  }
+};
+
+export const askPerformanceAI = async (patient: PatientData, question: string): Promise<string> => {
+  try {
+    const ai = getAIClient();
+    const parts: any[] = [];
+
+    parts.push({ text: `
+      ROLE: Elite Performance Coach AI.
+      TASK: Answer the athlete's/coach's question based strictly on the patient data and performance analysis provided.
+      PATIENT PROFILE: ${patient.codeName}, ${patient.age}y ${patient.gender}.
+      WEARABLE METRICS: ${JSON.stringify(patient.rawMetrics)}
+      PERFORMANCE DATA: ${patient.performanceResult ? JSON.stringify(patient.performanceResult) : 'No performance report yet.'}
+      QUESTION: ${question}
+    ` });
+
+    const response = await ai.models.generateContent({
+      model: ANALYSIS_MODEL,
+      contents: [{ parts }],
+    });
+
+    return response.text || "No insights found.";
+  } catch (err) {
+    console.error("Performance AI Chat Error:", err);
     throw new Error("Unable to query AI. Check API Key or connection.");
   }
 };

@@ -3,6 +3,7 @@ export enum AppView {
   PATIENT_LIST = 'PATIENT_LIST',
   INGESTION = 'INGESTION',
   ANALYSIS = 'ANALYSIS',
+  PERFORMANCE = 'PERFORMANCE',
   SETTINGS = 'SETTINGS'
 }
 
@@ -21,8 +22,10 @@ export interface PatientData {
     birth: string;
     current: string;
   };
-  analysisResult?: AnalysisResult | null; // Persist analysis per patient
+  analysisResult?: AnalysisResult | null;
+  performanceResult?: PerformanceResult | null;
   chatHistory?: ChatMessage[];
+  performanceChatHistory?: ChatMessage[];
 }
 
 export interface ChatMessage {
@@ -87,4 +90,61 @@ export interface AnalysisResult {
   }[];
   disclaimer: string;
   summary: string;
+}
+
+// Performance Coaching Types
+export interface WorkoutData {
+  id: string;
+  date: string;
+  type: 'run' | 'cycle' | 'swim' | 'strength' | 'hiit' | 'other';
+  duration: number; // minutes
+  distance?: number; // km
+  calories?: number;
+  avgHr?: number;
+  maxHr?: number;
+  notes: string;
+}
+
+export interface RecoveryMetrics {
+  date: string;
+  sleepScore?: number;
+  hrv?: number;
+  restingHr?: number;
+  recoveryScore?: number;
+  strain?: number;
+}
+
+export interface PerformanceResult {
+  athleteProfile: {
+    currentFitness: string;
+    strengths: string[];
+    weaknesses: string[];
+    injuryRisk: 'low' | 'medium' | 'high';
+  };
+  trainingZones: {
+    zone1: string;
+    zone2: string;
+    zone3: string;
+    zone4: string;
+    zone5: string;
+  };
+  weeklyPlan: {
+    day: string;
+    focus: string;
+    workout: string;
+    duration: string;
+    intensity: 'easy' | 'moderate' | 'hard';
+  }[];
+  keyMetrics: {
+    vo2max?: number;
+    threshold?: string;
+    fatigueLevel: number;
+    form: number;
+    fitness: number;
+  };
+  recommendations: string[];
+  recoveryProtocol: string[];
+  nutritionTips: string[];
+  summary: string;
+  disclaimer: string;
 }

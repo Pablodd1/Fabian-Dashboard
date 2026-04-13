@@ -1,6 +1,6 @@
 import React from 'react';
 import { AppView } from '../types.ts';
-import { FileText, Settings, Activity, Dna, Database } from 'lucide-react';
+import { FileText, Settings, Activity, Dna, Database, Zap } from 'lucide-react';
 
 interface SidebarProps {
   currentView: AppView;
@@ -12,6 +12,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView }) =
     { id: AppView.PATIENT_LIST, icon: Database, label: 'Patient Database' },
     { id: AppView.INGESTION, icon: FileText, label: 'Data Ingestion' },
     { id: AppView.ANALYSIS, icon: Activity, label: 'Analysis Report' },
+    { id: AppView.PERFORMANCE, icon: Zap, label: 'Performance Hub' },
     { id: AppView.SETTINGS, icon: Settings, label: 'Settings' },
   ];
 

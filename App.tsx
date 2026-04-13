@@ -3,11 +3,13 @@ import { Sidebar } from './components/Sidebar.tsx';
 import { Header } from './components/Header.tsx';
 import { IngestionPanel } from './components/IngestionPanel.tsx';
 import { AnalysisReport } from './components/AnalysisReport.tsx';
+import { PerformancePanel } from './components/PerformancePanel.tsx';
+import { PerformanceReport } from './components/PerformanceReport.tsx';
 import { PatientList } from './components/PatientList.tsx';
 import { DisclaimerModal } from './components/DisclaimerModal.tsx';
 import { RegistrationModal } from './components/RegistrationModal.tsx';
 import { AppView, PatientData } from './types.ts';
-import { analyzePatientData } from './services/geminiService.ts';
+import { analyzePatientData, generatePerformanceReport } from './services/geminiService.ts';
 
 const DEMO_PATIENTS: PatientData[] = [
   {
@@ -185,15 +187,16 @@ const App: React.FC = () => {
   const [patients, setPatients] = useState<PatientData[]>(DEMO_PATIENTS);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isPerformanceAnalyzing, setIsPerformanceAnalyzing] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  
+
   const apiKeyDetected = !!process.env.API_KEY;
 
   const activePatient = patients.find(p => p.id === selectedPatientId) || null;
 
   const handleUpdatePatient = (data: Partial<PatientData>) => {
     if (!selectedPatientId) return;
-    setPatients(prev => prev.map(p => 
+    setPatients(prev => prev.map(p =>
       p.id === selectedPatientId ? { ...p, ...data } : p
     ));
   };
@@ -225,14 +228,32 @@ const App: React.FC = () => {
     setCurrentView(AppView.INGESTION);
   };
 
+  const runPerformanceAnalysis = async () => {
+    if (!activePatient) return;
+    setIsPerformanceAnalyzing(true);
+    try {
+      const result = await generatePerformanceReport(activePatient);
+      setPatients(prev => prev.map(p =>
+        p.id === selectedPatientId
+          ? { ...p, performanceResult: result }
+          : p
+      ));
+      setCurrentView(AppView.ANALYSIS);
+    } catch (error) {
+      alert("Performance engine error. Verify API configuration.");
+    } finally {
+      setIsPerformanceAnalyzing(false);
+    }
+  };
+
   const runAnalysis = async () => {
     if (!activePatient) return;
     setIsAnalyzing(true);
     try {
       const result = await analyzePatientData(activePatient);
-      setPatients(prev => prev.map(p => 
-        p.id === selectedPatientId 
-          ? { ...p, analysisResult: result, status: 'Complete' } 
+      setPatients(prev => prev.map(p =>
+        p.id === selectedPatientId
+          ? { ...p, analysisResult: result, status: 'Complete' }
           : p
       ));
       setCurrentView(AppView.ANALYSIS);
@@ -247,50 +268,71 @@ const App: React.FC = () => {
     <div className="flex min-h-screen bg-slate-950 text-slate-200">
       <DisclaimerModal />
       {isRegistering && (
-        <RegistrationModal 
-          onClose={() => setIsRegistering(false)} 
-          onConfirm={confirmRegistration} 
+        <RegistrationModal
+          onClose={() => setIsRegistering(false)}
+          onConfirm={confirmRegistration}
         />
       )}
-      
-      <Sidebar 
-        currentView={currentView} 
+
+      <Sidebar
+        currentView={currentView}
         onChangeView={(view) => {
           if (view === AppView.PATIENT_LIST) setSelectedPatientId(null);
           setCurrentView(view);
-        }} 
+        }}
       />
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         <Header />
-        
+
         <main className="flex-1 overflow-y-auto p-6 lg:p-10 relative">
-          
+
           {currentView === AppView.PATIENT_LIST && (
-            <PatientList 
-              patients={patients} 
+            <PatientList
+              patients={patients}
               onSelectPatient={handleSelectPatient}
               onAddPatient={() => setIsRegistering(true)}
             />
           )}
 
           {currentView === AppView.INGESTION && activePatient && (
-            <IngestionPanel 
-              patient={activePatient} 
-              onUpdatePatient={handleUpdatePatient} 
+            <IngestionPanel
+              patient={activePatient}
+              onUpdatePatient={handleUpdatePatient}
               onAnalyze={runAnalysis}
               isAnalyzing={isAnalyzing}
             />
           )}
 
           {currentView === AppView.ANALYSIS && activePatient && (
-            <AnalysisReport 
+            <AnalysisReport
               patient={activePatient}
               onUpdatePatient={handleUpdatePatient}
-              data={activePatient.analysisResult || null} 
+              data={activePatient.analysisResult || null}
               onRetry={runAnalysis}
               isAnalyzing={isAnalyzing}
             />
+          )}
+
+          {currentView === AppView.PERFORMANCE && activePatient && (
+            <>
+              {!activePatient.performanceResult ? (
+                <PerformancePanel
+                  patient={activePatient}
+                  onUpdatePatient={handleUpdatePatient}
+                  onAnalyze={runPerformanceAnalysis}
+                  isAnalyzing={isPerformanceAnalyzing}
+                />
+              ) : (
+                <PerformanceReport
+                  patient={activePatient}
+                  onUpdatePatient={handleUpdatePatient}
+                  data={activePatient.performanceResult}
+                  onRetry={runPerformanceAnalysis}
+                  isAnalyzing={isPerformanceAnalyzing}
+                />
+              )}
+            </>
           )}
 
           {currentView === AppView.SETTINGS && (
